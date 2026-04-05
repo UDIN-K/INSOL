@@ -1,10 +1,57 @@
 <?= $this->extend('layouts/main') ?>
 <?= $this->section('content') ?>
-<h2>Dashboard</h2>
-<p>Selamat datang, <?= esc((string) session()->get('nama')) ?>.</p>
-<div class="grid">
-    <div class="card"><h3>Total Mahasiswa</h3><p><strong><?= esc((string) $totalMahasiswa) ?></strong></p></div>
-    <div class="card"><h3>Total Kriteria</h3><p><strong><?= esc((string) $totalKriteria) ?></strong></p></div>
-    <div class="card"><h3>Total Lolos</h3><p><strong><?= esc((string) $totalLolos) ?></strong></p></div>
+<div class="dash-title-row">
+    <h2>Dashboard</h2>
+    <div class="dash-breadcrumb">Dashboard / Home</div>
+</div>
+
+<div class="dash-metric-grid">
+    <div class="card metric-card">
+        <div class="metric-title">Total Mahasiswa</div>
+        <div class="metric-value"><?= esc((string) $totalMahasiswa) ?></div>
+        <div class="metric-sub">Data mahasiswa terdaftar</div>
+        <div class="sparkline"></div>
+    </div>
+    <div class="card metric-card">
+        <div class="metric-title">Total Kriteria</div>
+        <div class="metric-value"><?= esc((string) $totalKriteria) ?></div>
+        <div class="metric-sub">Kriteria aktif seleksi</div>
+        <div class="sparkline"></div>
+    </div>
+    <div class="card metric-card">
+        <div class="metric-title">Total Lolos</div>
+        <div class="metric-value"><?= esc((string) $totalLolos) ?></div>
+        <div class="metric-sub">Akumulasi hasil lolos</div>
+        <div class="sparkline"></div>
+    </div>
+    <div class="card metric-card">
+        <div class="metric-title">Sesi Penilaian</div>
+        <div class="metric-value"><?= esc((string) $totalPenilaian) ?></div>
+        <div class="metric-sub">Penilaian ke- terakhir</div>
+        <div class="sparkline"></div>
+    </div>
+</div>
+
+<div class="dash-panel-grid">
+    <div class="card">
+        <h3 class="panel-title">Ringkasan Sistem</h3>
+        <p>SPK beasiswa berjalan dengan metode SAW dan menggunakan bobot kriteria dari modul Kriteria.</p>
+        <div class="mini-list">
+            <div class="mini-row"><span>Mahasiswa</span><strong><?= esc((string) $totalMahasiswa) ?></strong></div>
+            <div class="mini-row"><span>Kriteria</span><strong><?= esc((string) $totalKriteria) ?></strong></div>
+            <div class="mini-row"><span>Lolos</span><strong><?= esc((string) $totalLolos) ?></strong></div>
+            <div class="mini-row"><span>Sesi</span><strong><?= esc((string) $totalPenilaian) ?></strong></div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3 class="panel-title">Quick Actions</h3>
+        <div class="quick-actions">
+            <a class="btn" href="/mahasiswa">Kelola Mahasiswa</a>
+            <a class="btn btn-secondary" href="/kriteria">Kelola Kriteria</a>
+            <a class="btn btn-success" href="/penilaian">Input Penilaian</a>
+            <a class="btn" href="/hasil">Lihat Hasil</a>
+        </div>
+    </div>
 </div>
 <?= $this->endSection() ?>

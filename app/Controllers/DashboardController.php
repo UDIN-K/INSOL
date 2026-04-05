@@ -10,10 +10,14 @@ class DashboardController extends BaseController
 {
     public function getIndex(): string
     {
+        $hasilModel = new HasilModel();
+        $maxPenilaian = $hasilModel->selectMax('penilaian_ke')->first();
+
         return view('dashboard/index', [
             'totalMahasiswa' => (new MahasiswaModel())->countAllResults(),
             'totalKriteria' => (new KriteriaModel())->countAllResults(),
-            'totalLolos' => (new HasilModel())->where('status_lolos', 'Lolos')->countAllResults(),
+            'totalLolos' => $hasilModel->where('status_lolos', 'Lolos')->countAllResults(),
+            'totalPenilaian' => (int) ($maxPenilaian['penilaian_ke'] ?? 0),
         ]);
     }
 }
