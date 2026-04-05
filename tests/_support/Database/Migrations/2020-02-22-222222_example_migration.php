@@ -1,14 +1,11 @@
 <?php
 
-declare(strict_types=1);
-
 namespace Tests\Support\Database\Migrations;
 
 use CodeIgniter\Database\Migration;
 
 class ExampleMigration extends Migration
 {
-    /** @var string */
     protected $DBGroup = 'tests';
 
     public function up(): void

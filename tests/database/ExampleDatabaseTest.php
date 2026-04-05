@@ -1,8 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
-use CodeIgniter\Database\ResultInterface;
 use CodeIgniter\Test\CIUnitTestCase;
 use CodeIgniter\Test\DatabaseTestTrait;
 use Tests\Support\Database\Seeds\ExampleSeeder;
@@ -15,7 +12,6 @@ final class ExampleDatabaseTest extends CIUnitTestCase
 {
     use DatabaseTestTrait;
 
-    /** @var class-string */
     protected $seed = ExampleSeeder::class;
 
     public function testModelFindAll(): void
@@ -35,17 +31,15 @@ final class ExampleDatabaseTest extends CIUnitTestCase
         $this->setPrivateProperty($model, 'useSoftDeletes', true);
         $this->setPrivateProperty($model, 'tempUseSoftDeletes', true);
 
+        /** @var stdClass $object */
         $object = $model->first();
-        assert($object instanceof stdClass);
         $model->delete($object->id);
 
         // The model should no longer find it
         $this->assertNull($model->find($object->id));
 
         // ... but it should still be in the database
-        $query = $model->builder()->where('id', $object->id)->get();
-        assert($query instanceof ResultInterface);
-        $result = $query->getResult();
+        $result = $model->builder()->where('id', $object->id)->get()->getResult();
 
         $this->assertCount(1, $result);
     }
