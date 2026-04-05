@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use CodeIgniter\Controller;
+use CodeIgniter\HTTP\CLIRequest;
 use CodeIgniter\HTTP\RequestInterface;
 use CodeIgniter\HTTP\ResponseInterface;
 use Psr\Log\LoggerInterface;
@@ -38,6 +39,22 @@ abstract class BaseController extends Controller
 
         // Caution: Do not edit this line.
         parent::initController($request, $response, $logger);
+
+        if ($request instanceof CLIRequest) {
+            return;
+        }
+
+        $path = trim($request->getUri()->getPath(), '/');
+        if (str_starts_with($path, 'index.php/')) {
+            $path = substr($path, strlen('index.php/'));
+        }
+
+        $publicPaths = ['login', 'login.php', 'logout', 'logout.php', 'index.php/login', 'index.php/login.php', 'index.php/logout', 'index.php/logout.php'];
+
+        if (! in_array($path, $publicPaths, true) && ! session()->get('user_id')) {
+            redirect()->to('/login')->send();
+            exit;
+        }
 
         // Preload any models, libraries, etc, here.
         // $this->session = service('session');
