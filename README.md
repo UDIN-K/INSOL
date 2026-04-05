@@ -47,21 +47,21 @@ Section ini diupdate otomatis oleh workflow GitHub Actions di .github/workflows/
 
 <!-- DUCK_DANCE_START -->
 ```text
-							.-"""-.
-						 / _   _ \
-						|  o\_/o  |
-						|  (___)  |   <- kacamata 😎
-				 ___\  \_/  /___
-			 .'    `-----'    `.
-			/   .--.     .--.   \
-		 |   /    \___/    \   |
-		 |  |  🦆   ___   🦏 |  |
-		 |   \__."`   `".__/   |
-			\      _/|\_        /
-			 `-.__/  |  \__..-'
-						/_/ \_\
+            .-====-.
+           /  _  _  \
+          |  (o)(o)  |
+          |    __    |  <- kacamata 😎
+       ___|   /__\   |___
+     /    |    /\    |    \
+    /  🦆 |   /  \   | 🦏  \
+   |      |  /____\  |      |
+    \      \_/ || \_/      /
+     \_________||_________/
+         _/\_      _/\_
+        /_/\_\    /_/\_\
+           ♪        ♪
 
-mode joget jumbo aktif: 1/4 ♪
+mode joget jumbo aktif: 1/4 😎🦆🦏
 ```
 <!-- DUCK_DANCE_END -->
 
