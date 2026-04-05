@@ -83,36 +83,85 @@
         <button class="btn" type="submit"><i class="bi bi-box-arrow-in-right"></i> Login</button>
     </form>
 </div>
+<?php endif; ?>
 
 <script>
 (() => {
-    const popup = document.getElementById('loginPopup');
-
-    if (!popup) return;
-
+    const loginPopup = document.getElementById('loginPopup');
     const nextInput = document.getElementById('loginNext');
-    const closeBtn = document.getElementById('closeLoginPopup');
+    const closeLoginBtn = document.getElementById('closeLoginPopup');
     const usernameInput = document.getElementById('popupUsername');
 
-    const focusFirstInput = () => {
+    const pagePopup = document.getElementById('pagePopup');
+    const pagePopupFrame = document.getElementById('pagePopupFrame');
+    const pagePopupTitle = document.getElementById('pagePopupTitle');
+    const closePagePopupBtn = document.getElementById('closePagePopup');
+    const openNewTabBtn = document.getElementById('openPageInTab');
+
+    const focusLoginInput = () => {
         if (!usernameInput) return;
         setTimeout(() => usernameInput.focus(), 60);
     };
 
-    const openPopup = (nextUrl) => {
+    const openLoginPopup = (nextUrl) => {
+        if (!loginPopup) return;
         if (nextUrl && nextInput) {
             nextInput.value = nextUrl;
         }
-        popup.classList.add('open');
-        focusFirstInput();
+        loginPopup.classList.add('open');
+        focusLoginInput();
     };
 
-    const closePopup = () => popup.classList.remove('open');
+    const closeLoginPopup = () => {
+        if (!loginPopup) return;
+        loginPopup.classList.remove('open');
+    };
+
+    const openPagePopup = (href, titleText) => {
+        if (!pagePopup || !pagePopupFrame) return;
+        pagePopup.classList.add('open');
+        document.body.classList.add('popup-open');
+        pagePopupFrame.src = href;
+        pagePopupFrame.dataset.currentHref = href;
+        if (pagePopupTitle) {
+            pagePopupTitle.textContent = titleText && titleText.trim() !== '' ? titleText.trim() : 'Halaman';
+        }
+    };
+
+    const closePagePopup = () => {
+        if (!pagePopup || !pagePopupFrame) return;
+        pagePopup.classList.remove('open');
+        document.body.classList.remove('popup-open');
+        setTimeout(() => {
+            if (!pagePopup.classList.contains('open')) {
+                pagePopupFrame.src = 'about:blank';
+                pagePopupFrame.dataset.currentHref = '';
+            }
+        }, 140);
+    };
+
+    const shouldOpenInPagePopup = (anchor, href) => {
+        if (!pagePopup || !href) return false;
+        if (anchor.classList.contains('login-trigger') || anchor.classList.contains('requires-login')) return false;
+        if (anchor.hasAttribute('data-no-popup')) return false;
+        if (anchor.getAttribute('target') && anchor.getAttribute('target') !== '_self') return false;
+        if (href.startsWith('javascript:') || href.startsWith('mailto:') || href.startsWith('tel:')) return false;
+
+        try {
+            const targetUrl = new URL(href, window.location.origin);
+            if (targetUrl.origin !== window.location.origin) return false;
+            const path = targetUrl.pathname || '';
+            if (path === '/logout' || path === '/login') return false;
+            return true;
+        } catch (error) {
+            return false;
+        }
+    };
 
     document.querySelectorAll('.login-trigger').forEach((el) => {
         el.addEventListener('click', (e) => {
             e.preventDefault();
-            openPopup(window.location.pathname + window.location.search);
+            openLoginPopup(window.location.pathname + window.location.search);
         });
     });
 
@@ -120,33 +169,79 @@
         el.addEventListener('click', (e) => {
             e.preventDefault();
             const href = el.getAttribute('href') || '/dashboard';
-            openPopup(href);
+            openLoginPopup(href);
         });
     });
 
-    if (closeBtn) {
-        closeBtn.addEventListener('click', closePopup);
+    if (closeLoginBtn) {
+        closeLoginBtn.addEventListener('click', closeLoginPopup);
     }
 
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && popup.classList.contains('open')) {
-            closePopup();
+    document.addEventListener('click', (e) => {
+        const target = e.target;
+        if (!(target instanceof Element)) return;
+
+        const anchor = target.closest('a[href]');
+        if (!anchor) {
+            if (loginPopup && loginPopup.classList.contains('open') && !target.closest('#loginPopup')) {
+                closeLoginPopup();
+            }
+            if (pagePopup && pagePopup.classList.contains('open') && target.id === 'pagePopup') {
+                closePagePopup();
+            }
+            return;
+        }
+
+        if (e.defaultPrevented) return;
+
+        const href = anchor.getAttribute('href') || '';
+        if (shouldOpenInPagePopup(anchor, href)) {
+            e.preventDefault();
+            const targetUrl = new URL(href, window.location.origin);
+            openPagePopup(targetUrl.pathname + targetUrl.search + targetUrl.hash, anchor.textContent || 'Halaman');
         }
     });
 
-    document.addEventListener('click', (e) => {
-        if (!popup.classList.contains('open')) return;
-        const target = e.target;
-        if (!(target instanceof Element)) return;
-        if (target.closest('#loginPopup') || target.closest('.login-trigger') || target.closest('a.requires-login')) return;
-        closePopup();
+    if (closePagePopupBtn) {
+        closePagePopupBtn.addEventListener('click', closePagePopup);
+    }
+
+    if (openNewTabBtn && pagePopupFrame) {
+        openNewTabBtn.addEventListener('click', () => {
+            const href = pagePopupFrame.dataset.currentHref || pagePopupFrame.src;
+            if (!href || href === 'about:blank') return;
+            window.open(href, '_blank', 'noopener');
+        });
+    }
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key !== 'Escape') return;
+        if (loginPopup && loginPopup.classList.contains('open')) {
+            closeLoginPopup();
+            return;
+        }
+        if (pagePopup && pagePopup.classList.contains('open')) {
+            closePagePopup();
+        }
     });
 
-    if (popup.classList.contains('open')) {
-        focusFirstInput();
+    if (loginPopup && loginPopup.classList.contains('open')) {
+        focusLoginInput();
     }
 })();
 </script>
-<?php endif; ?>
+
+<div id="pagePopup" class="page-popup" aria-hidden="true">
+    <div class="page-popup-dialog" role="dialog" aria-modal="true" aria-label="Popup Halaman">
+        <div class="page-popup-header">
+            <strong id="pagePopupTitle"><i class="bi bi-window"></i> Halaman</strong>
+            <div class="page-popup-actions">
+                <button type="button" id="openPageInTab" class="page-popup-btn" title="Buka di tab baru"><i class="bi bi-box-arrow-up-right"></i></button>
+                <button type="button" id="closePagePopup" class="page-popup-btn" title="Tutup"><i class="bi bi-x-lg"></i></button>
+            </div>
+        </div>
+        <iframe id="pagePopupFrame" class="page-popup-frame" src="about:blank" loading="lazy"></iframe>
+    </div>
+</div>
 </body>
 </html>
