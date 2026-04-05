@@ -49,10 +49,28 @@ abstract class BaseController extends Controller
             $path = substr($path, strlen('index.php/'));
         }
 
-        $publicPaths = ['login', 'login.php', 'logout', 'logout.php', 'index.php/login', 'index.php/login.php', 'index.php/logout', 'index.php/logout.php'];
+        $publicPaths = [
+            '',
+            'dashboard',
+            'index.php/dashboard',
+            'login',
+            'login.php',
+            'logout',
+            'logout.php',
+            'index.php/login',
+            'index.php/login.php',
+            'index.php/logout',
+            'index.php/logout.php',
+        ];
 
         if (! in_array($path, $publicPaths, true) && ! session()->get('user_id')) {
-            redirect()->to('/login')->send();
+            $target = '/' . ltrim($path, '/');
+            $query = $request->getUri()->getQuery();
+            if ($query !== '') {
+                $target .= '?' . $query;
+            }
+
+            redirect()->to('/dashboard?login=1&next=' . rawurlencode($target))->send();
             exit;
         }
 
