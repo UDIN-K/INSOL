@@ -59,9 +59,9 @@ Section ini diupdate otomatis oleh workflow GitHub Actions di .github/workflows/
      \_________||_________/
          _/\_      _/\_
         /_/\_\    /_/\_\
-          ♫          ♪
+        ♪     ♪       ♫
 
-mode joget jumbo aktif: 2/4 😎🦆🦏
+mode joget jumbo aktif: 3/4 😎🦆🦏
 ```
 <!-- DUCK_DANCE_END -->
 
