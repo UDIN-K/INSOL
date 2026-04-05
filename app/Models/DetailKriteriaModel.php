@@ -10,5 +10,5 @@ class DetailKriteriaModel extends Model
     protected $primaryKey = 'id';
     protected $returnType = 'array';
     protected $useTimestamps = true;
-    protected $allowedFields = ['kriteria_id', 'sub_kriteria', 'nilai'];
+    protected $allowedFields = ['kriteria_id', 'sub_kriteria', 'jenis_kondisi', 'batas_bawah', 'batas_atas', 'nilai'];
 }

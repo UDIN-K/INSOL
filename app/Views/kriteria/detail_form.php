@@ -15,7 +15,22 @@
         <?php endforeach; ?>
     </select>
 </div>
-<div class="form-group"><label>Sub Kriteria</label><input type="text" name="sub_kriteria" value="<?= esc((string) old('sub_kriteria', $detail['sub_kriteria'] ?? '')) ?>" required></div>
+<div class="form-group"><label>Sub Kriteria (text)</label><input type="text" name="sub_kriteria" value="<?= esc((string) old('sub_kriteria', $detail['sub_kriteria'] ?? '')) ?>"></div>
+<div class="form-group">
+    <label>Jenis Kondisi</label>
+    <?php $jenis = old('jenis_kondisi', $detail['jenis_kondisi'] ?? 'text'); ?>
+    <select name="jenis_kondisi" required>
+        <option value="text" <?= $jenis === 'text' ? 'selected' : '' ?>>Text</option>
+        <option value="range" <?= $jenis === 'range' ? 'selected' : '' ?>>Range (min-max)</option>
+        <option value="eq" <?= $jenis === 'eq' ? 'selected' : '' ?>>Sama Dengan (=)</option>
+        <option value="gt" <?= $jenis === 'gt' ? 'selected' : '' ?>>Lebih Besar (>)</option>
+        <option value="gte" <?= $jenis === 'gte' ? 'selected' : '' ?>>Lebih Besar Sama Dengan (>=)</option>
+        <option value="lt" <?= $jenis === 'lt' ? 'selected' : '' ?>>Lebih Kecil (<)</option>
+        <option value="lte" <?= $jenis === 'lte' ? 'selected' : '' ?>>Lebih Kecil Sama Dengan (<=)</option>
+    </select>
+</div>
+<div class="form-group"><label>Batas Bawah (angka)</label><input type="number" step="0.0001" name="batas_bawah" value="<?= esc((string) old('batas_bawah', $detail['batas_bawah'] ?? '')) ?>"></div>
+<div class="form-group"><label>Batas Atas (angka)</label><input type="number" step="0.0001" name="batas_atas" value="<?= esc((string) old('batas_atas', $detail['batas_atas'] ?? '')) ?>"></div>
 <div class="form-group"><label>Nilai</label><input type="number" step="0.0001" name="nilai" value="<?= esc((string) old('nilai', $detail['nilai'] ?? '0')) ?>" required></div>
 <button class="btn" type="submit">Simpan</button>
 <a class="btn btn-secondary" href="/kriteria">Kembali</a>

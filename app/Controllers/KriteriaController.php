@@ -7,6 +7,27 @@ use App\Models\KriteriaModel;
 
 class KriteriaController extends BaseController
 {
+    private function buildSubKriteriaLabel(string $jenis, ?string $subKriteria, ?string $batasBawah, ?string $batasAtas): string
+    {
+        $label = trim((string) $subKriteria);
+        if ($jenis === 'text') {
+            return $label;
+        }
+
+        $bb = trim((string) $batasBawah);
+        $ba = trim((string) $batasAtas);
+
+        return match ($jenis) {
+            'range' => $bb . '-' . $ba,
+            'eq' => $bb,
+            'gt' => '>' . $bb,
+            'gte' => '>=' . $bb,
+            'lt' => '<' . $bb,
+            'lte' => '<=' . $bb,
+            default => $label,
+        };
+    }
+
     public function getIndex(): string
     {
         $kriteria = (new KriteriaModel())->orderBy('kode', 'ASC')->findAll();
@@ -14,6 +35,8 @@ class KriteriaController extends BaseController
             ->select('detail_kriteria.*, kriteria.kode, kriteria.kriteria')
             ->join('kriteria', 'kriteria.id = detail_kriteria.kriteria_id')
             ->orderBy('kriteria.kode', 'ASC')
+            ->orderBy('detail_kriteria.nilai', 'ASC')
+            ->orderBy('detail_kriteria.id', 'ASC')
             ->findAll();
         $totalBobot = 0.0;
         foreach ($kriteria as $item) {
@@ -83,9 +106,16 @@ class KriteriaController extends BaseController
 
     public function postDetailStore()
     {
+        $jenis = (string) ($this->request->getPost('jenis_kondisi') ?: 'text');
+        $batasBawah = $this->request->getPost('batas_bawah');
+        $batasAtas = $this->request->getPost('batas_atas');
+
         (new DetailKriteriaModel())->insert([
             'kriteria_id' => $this->request->getPost('kriteria_id'),
-            'sub_kriteria' => $this->request->getPost('sub_kriteria'),
+            'sub_kriteria' => $this->buildSubKriteriaLabel($jenis, (string) $this->request->getPost('sub_kriteria'), (string) $batasBawah, (string) $batasAtas),
+            'jenis_kondisi' => $jenis,
+            'batas_bawah' => $batasBawah !== '' ? $batasBawah : null,
+            'batas_atas' => $batasAtas !== '' ? $batasAtas : null,
             'nilai' => $this->request->getPost('nilai'),
         ]);
 
@@ -104,9 +134,16 @@ class KriteriaController extends BaseController
 
     public function postDetailUpdate(int $id)
     {
+        $jenis = (string) ($this->request->getPost('jenis_kondisi') ?: 'text');
+        $batasBawah = $this->request->getPost('batas_bawah');
+        $batasAtas = $this->request->getPost('batas_atas');
+
         (new DetailKriteriaModel())->update($id, [
             'kriteria_id' => $this->request->getPost('kriteria_id'),
-            'sub_kriteria' => $this->request->getPost('sub_kriteria'),
+            'sub_kriteria' => $this->buildSubKriteriaLabel($jenis, (string) $this->request->getPost('sub_kriteria'), (string) $batasBawah, (string) $batasAtas),
+            'jenis_kondisi' => $jenis,
+            'batas_bawah' => $batasBawah !== '' ? $batasBawah : null,
+            'batas_atas' => $batasAtas !== '' ? $batasAtas : null,
             'nilai' => $this->request->getPost('nilai'),
         ]);
 
