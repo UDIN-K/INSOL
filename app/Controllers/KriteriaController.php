@@ -9,11 +9,11 @@ class KriteriaController extends BaseController
 {
     public function getIndex(): string
     {
-        $kriteria = (new KriteriaModel())->orderBy('id', 'ASC')->findAll();
+        $kriteria = (new KriteriaModel())->orderBy('kode', 'ASC')->findAll();
         $detailKriteria = (new DetailKriteriaModel())
-            ->select('detail_kriteria.*, kriteria.kriteria')
+            ->select('detail_kriteria.*, kriteria.kode, kriteria.kriteria')
             ->join('kriteria', 'kriteria.id = detail_kriteria.kriteria_id')
-            ->orderBy('kriteria.id', 'ASC')
+            ->orderBy('kriteria.kode', 'ASC')
             ->findAll();
         $totalBobot = 0.0;
         foreach ($kriteria as $item) {
@@ -35,8 +35,10 @@ class KriteriaController extends BaseController
     public function postStore()
     {
         (new KriteriaModel())->insert([
+            'kode' => strtoupper((string) $this->request->getPost('kode')),
             'kriteria' => $this->request->getPost('kriteria'),
             'bobot' => $this->request->getPost('bobot'),
+            'atribut' => $this->request->getPost('atribut'),
         ]);
 
         return redirect()->to('/kriteria')->with('success', 'Data tersimpan.');
@@ -54,8 +56,10 @@ class KriteriaController extends BaseController
     public function postUpdate(int $id)
     {
         (new KriteriaModel())->update($id, [
+            'kode' => strtoupper((string) $this->request->getPost('kode')),
             'kriteria' => $this->request->getPost('kriteria'),
             'bobot' => $this->request->getPost('bobot'),
+            'atribut' => $this->request->getPost('atribut'),
         ]);
 
         return redirect()->to('/kriteria')->with('success', 'Data diperbarui.');
@@ -73,7 +77,7 @@ class KriteriaController extends BaseController
             'title' => 'Tambah Detail Kriteria',
             'action' => '/kriteria/detail/store',
             'detail' => null,
-            'kriteria' => (new KriteriaModel())->orderBy('id', 'ASC')->findAll(),
+            'kriteria' => (new KriteriaModel())->orderBy('kode', 'ASC')->findAll(),
         ]);
     }
 
@@ -94,7 +98,7 @@ class KriteriaController extends BaseController
             'title' => 'Edit Detail Kriteria',
             'action' => '/kriteria/detail/update/' . $id,
             'detail' => (new DetailKriteriaModel())->find($id),
-            'kriteria' => (new KriteriaModel())->orderBy('id', 'ASC')->findAll(),
+            'kriteria' => (new KriteriaModel())->orderBy('kode', 'ASC')->findAll(),
         ]);
     }
 

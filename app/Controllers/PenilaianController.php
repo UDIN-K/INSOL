@@ -25,7 +25,7 @@ class PenilaianController extends BaseController
     public function getInput(int $id): string
     {
         $mahasiswa = (new MahasiswaModel())->find($id);
-        $kriteria = (new KriteriaModel())->orderBy('id', 'ASC')->findAll();
+        $kriteria = (new KriteriaModel())->orderBy('kode', 'ASC')->findAll();
         $penilaian = (new PenilaianModel())->where('mahasiswa_id', $id)->findAll();
 
         $nilaiByKriteria = [];

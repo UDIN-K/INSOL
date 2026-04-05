@@ -10,5 +10,5 @@ class HasilModel extends Model
     protected $primaryKey = 'id';
     protected $returnType = 'array';
     protected $useTimestamps = true;
-    protected $allowedFields = ['mahasiswa_id', 'skor', 'ranking', 'status_lolos'];
+    protected $allowedFields = ['mahasiswa_id', 'penilaian_ke', 'skor', 'ranking', 'status_lolos'];
 }

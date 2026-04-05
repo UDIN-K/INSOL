@@ -10,7 +10,7 @@
         <option value="">-- Pilih Kriteria --</option>
         <?php foreach ($kriteria as $item): ?>
             <option value="<?= esc((string) $item['id']) ?>" <?= $selectedKriteria === (string) $item['id'] ? 'selected' : '' ?>>
-                <?= esc($item['kriteria']) ?>
+                <?= esc($item['kode']) ?> - <?= esc($item['kriteria']) ?>
             </option>
         <?php endforeach; ?>
     </select>

@@ -9,16 +9,12 @@ use App\Models\PenilaianModel;
 
 class HasilController extends BaseController
 {
-    private function isCost(string $kriteria): bool
-    {
-        return str_contains(strtolower($kriteria), 'penghasilan');
-    }
-
     public function getIndex(): string
     {
         $rows = (new HasilModel())
             ->select('hasil.*, mahasiswa.nim, mahasiswa.nama')
             ->join('mahasiswa', 'mahasiswa.id = hasil.mahasiswa_id')
+            ->orderBy('penilaian_ke', 'DESC')
             ->orderBy('ranking', 'ASC')
             ->findAll();
 
@@ -64,7 +60,7 @@ class HasilController extends BaseController
                 $kid = (int) $k['id'];
                 $v = (float) ($nilai[$m['id']][$kid] ?? 0);
                 $w = ((float) $k['bobot']) / $bobotTotal;
-                $n = $this->isCost((string) ($k['kriteria'] ?? ''))
+                $n = (($k['atribut'] ?? 'benefit') === 'cost')
                     ? ($v > 0 ? $min[$kid] / $v : 0)
                     : ($max[$kid] > 0 ? $v / $max[$kid] : 0);
                 $pref += $n * $w;
@@ -76,18 +72,20 @@ class HasilController extends BaseController
 
         $kuota = max(1, (int) $this->request->getPost('kuota'));
         $model = new HasilModel();
-        $model->truncate();
+        $last = $model->selectMax('penilaian_ke')->first();
+        $penilaianKe = (int) ($last['penilaian_ke'] ?? 0) + 1;
 
         foreach ($scores as $i => $item) {
             $rank = $i + 1;
             $model->insert([
                 'mahasiswa_id' => $item['mahasiswa_id'],
+                'penilaian_ke' => $penilaianKe,
                 'skor' => $item['skor'],
                 'ranking' => $rank,
                 'status_lolos' => $rank <= $kuota ? 'Lolos' : 'Tidak Lolos',
             ]);
         }
 
-        return redirect()->to('/hasil')->with('success', 'Perhitungan SAW selesai.');
+        return redirect()->to('/hasil')->with('success', 'Perhitungan SAW selesai untuk penilaian ke-' . $penilaianKe . '.');
     }
 }

@@ -10,5 +10,5 @@ class KriteriaModel extends Model
     protected $primaryKey = 'id';
     protected $returnType = 'array';
     protected $useTimestamps = true;
-    protected $allowedFields = ['kriteria', 'bobot'];
+    protected $allowedFields = ['kode', 'kriteria', 'bobot', 'atribut'];
 }

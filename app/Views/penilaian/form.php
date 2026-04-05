@@ -4,11 +4,12 @@
 <form action="/penilaian/save/<?= esc((string) ($mahasiswa['id'] ?? 0)) ?>" method="post">
 <?= csrf_field() ?>
 <table>
-<thead><tr><th>No</th><th>Kriteria</th><th>Nilai</th></tr></thead>
+<thead><tr><th>No</th><th>Nomor</th><th>Kriteria</th><th>Nilai</th></tr></thead>
 <tbody>
 <?php foreach ($kriteria as $index => $item): ?>
 <tr>
 <td><?= $index + 1 ?></td>
+<td><?= esc($item['kode']) ?></td>
 <td><?= esc($item['kriteria']) ?></td>
 <td><input type="number" step="0.0001" min="0" name="nilai[<?= $item['id'] ?>]" value="<?= esc((string) old('nilai.' . $item['id'], $nilaiByKriteria[$item['id']] ?? '')) ?>" required></td>
 </tr>
