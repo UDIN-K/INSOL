@@ -41,18 +41,27 @@ Project ini dipakai untuk kelola data Mahasiswa, Kriteria, Penilaian, dan Hasil 
 - app/Views -> tampilan
 - public/css -> styling
 
-## Bebek Joget ASCII (Auto Update)
+## Bebek Badak Joget Berkacamata (Auto Update)
 
 Section ini diupdate otomatis oleh workflow GitHub Actions di .github/workflows/duck-dance.yml.
 
 <!-- DUCK_DANCE_START -->
 ```text
-  __
-<(o )___
- ( ._> /
-  `---'
+							.-"""-.
+						 / _   _ \
+						|  o\_/o  |
+						|  (___)  |   <- kacamata 😎
+				 ___\  \_/  /___
+			 .'    `-----'    `.
+			/   .--.     .--.   \
+		 |   /    \___/    \   |
+		 |  |  🦆   ___   🦏 |  |
+		 |   \__."`   `".__/   |
+			\      _/|\_        /
+			 `-.__/  |  \__..-'
+						/_/ \_\
 
-bebek lagi pemanasan... 🦆
+mode joget jumbo aktif: 1/4 ♪
 ```
 <!-- DUCK_DANCE_END -->
 
