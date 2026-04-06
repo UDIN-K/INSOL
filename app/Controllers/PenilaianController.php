@@ -91,29 +91,34 @@ class PenilaianController extends BaseController
         // Get kriteria
         $kriteria = $kriteriaModel->orderBy('kode', 'ASC')->findAll();
 
-        // Get penilaian values
-        $penilaianData = [];
+        // Build array untuk akses nilai per mahasiswa dan kriteria
+        // Structure: $nilaiTable[$mahasiswaId][$kriteriaId] = nilai
+        $nilaiTable = [];
+        
         foreach ($mahasiswa as $m) {
+            $nilaiTable[$m['id']] = [];
+            
+            // Get penilaian untuk mahasiswa ini
             $penilaian = $penilaianModel
                 ->where('mahasiswa_id', $m['id'])
                 ->where('penilaian_ke', 1)
                 ->findAll();
 
-            $nilaiByKriteria = [];
-            foreach ($penilaian as $p) {
-                $nilaiByKriteria[$p['kriteria_id']] = $p['nilai'];
+            // Fill nilai untuk setiap kriteria
+            foreach ($kriteria as $k) {
+                $nilaiTable[$m['id']][$k['id']] = 0;
             }
 
-            $penilaianData[$m['id']] = [
-                'mahasiswa' => $m,
-                'nilai' => $nilaiByKriteria,
-            ];
+            // Override dengan nilai yang ada
+            foreach ($penilaian as $p) {
+                $nilaiTable[$m['id']][$p['kriteria_id']] = (float) $p['nilai'];
+            }
         }
 
         return view('penilaian/cek_penilaian', [
             'mahasiswa' => $mahasiswa,
             'kriteria' => $kriteria,
-            'penilaianData' => $penilaianData,
+            'nilaiTable' => $nilaiTable,
             'selectedMahasiswa' => $selectedMahasiswa,
         ]);
     }

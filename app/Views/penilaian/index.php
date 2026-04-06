@@ -75,7 +75,7 @@
             </div>
         </div>
 
-        <!-- Mahasiswa Selection Card -->
+        <!-- Mahasiswa Selection Table -->
         <div class="card border-0 shadow-sm">
             <div class="card-header bg-primary text-white">
                 <div class="d-flex justify-content-between align-items-center">
@@ -93,45 +93,56 @@
                         </a>
                     </div>
                 <?php else: ?>
-                    <!-- Select All -->
-                    <div class="p-4 border-bottom bg-light">
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="selectAll" onchange="toggleSelectAll(this)">
-                            <label class="form-check-label fw-bold" for="selectAll">
-                                Pilih Semua Mahasiswa
-                            </label>
-                        </div>
-                    </div>
-
-                    <!-- Mahasiswa List -->
-                    <div class="p-0">
-                        <?php foreach ($mahasiswa as $m): ?>
-                            <div class="p-4 border-bottom mahasiswa-item" data-semester="<?= $m['semester']; ?>">
-                                <div class="form-check">
-                                    <input class="form-check-input mahasiswa-checkbox" 
-                                           type="checkbox" 
-                                           id="mhs_<?= $m['id']; ?>" 
-                                           name="mahasiswa[]" 
-                                           value="<?= $m['id']; ?>"
-                                           onchange="updateSelectedCount()">
-                                    <label class="form-check-label w-100" for="mhs_<?= $m['id']; ?>">
-                                        <div class="d-flex justify-content-between align-items-start">
-                                            <div>
-                                                <h6 class="mb-1"><?= $m['nama']; ?></h6>
-                                                <small class="text-muted">
-                                                    NIM: <strong><?= $m['nim']; ?></strong> | 
-                                                    Semester: <strong><?= $m['semester']; ?></strong> | 
-                                                    Angkatan: <strong><?= $m['angkatan']; ?></strong>
-                                                </small>
-                                            </div>
-                                            <div class="text-end">
-                                                <span class="badge bg-info">IPK: <?= number_format($m['ipk'], 2); ?></span>
-                                            </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th width="50">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="selectAll" onchange="toggleSelectAll(this)">
                                         </div>
-                                    </label>
-                                </div>
-                            </div>
-                        <?php endforeach; ?>
+                                    </th>
+                                    <th width="50">No</th>
+                                    <th>NIM</th>
+                                    <th>Nama</th>
+                                    <th width="100">Semester</th>
+                                    <th width="120">Tahun Masuk</th>
+                                    <th width="80">IPK</th>
+                                    <th>Penghasilan Ortu</th>
+                                    <th width="100">Tanggungan</th>
+                                    <th>Prestasi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($mahasiswa as $idx => $m): ?>
+                                    <tr class="mahasiswa-item" data-semester="<?= $m['semester']; ?>">
+                                        <td>
+                                            <div class="form-check">
+                                                <input class="form-check-input mahasiswa-checkbox" 
+                                                       type="checkbox" 
+                                                       id="mhs_<?= $m['id']; ?>" 
+                                                       name="mahasiswa[]" 
+                                                       value="<?= $m['id']; ?>"
+                                                       onchange="updateSelectedCount()">
+                                            </div>
+                                        </td>
+                                        <td><?= $idx + 1; ?></td>
+                                        <td><strong><?= esc($m['nim']); ?></strong></td>
+                                        <td><?= esc($m['nama']); ?></td>
+                                        <td><?= esc((string) ($m['semester'] ?? '-')); ?></td>
+                                        <td><?= esc((string) ($m['tahun_masuk'] ?? '-')); ?></td>
+                                        <td>
+                                            <span class="badge bg-info">
+                                                <?= number_format($m['ipk'] ?? 0, 2); ?>
+                                            </span>
+                                        </td>
+                                        <td><?= esc((string) number_format((int) ($m['penghasilan_ortu'] ?? 0))); ?></td>
+                                        <td><?= esc((string) ($m['jumlah_tanggungan'] ?? '-')); ?></td>
+                                        <td><?= esc((string) ($m['prestasi_non_akademik'] ?? '-')); ?></td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
                     </div>
                 <?php endif; ?>
             </div>

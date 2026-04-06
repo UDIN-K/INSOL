@@ -98,15 +98,18 @@ class MahasiswaController extends BaseController
             $nim = $this->request->getPost('nim');
             $nama = $this->request->getPost('nama');
             $semester = $this->request->getPost('semester');
-            $angkatan = $this->request->getPost('angkatan');
+            $tahun_masuk = $this->request->getPost('angkatan'); // Map to tahun_masuk
             $ipk = (float) $this->request->getPost('ipk');
             $penghasilan = (int) $this->request->getPost('penghasilan_ortu');
             $tanggungan = (int) $this->request->getPost('jumlah_tanggungan');
-            $prestasi = $this->request->getPost('prestasi');
+            $prestasi = $this->request->getPost('prestasi'); // Will map to prestasi_non_akademik
 
-            if (!$nim || !$nama || !$semester || !$angkatan || !$ipk || !$penghasilan || !$tanggungan || !$prestasi) {
+            if (!$nim || !$nama || !$semester || !$tahun_masuk || !$ipk || !$penghasilan || !$tanggungan || !$prestasi) {
                 return redirect()->back()->with('error', 'Semua field harus diisi!');
             }
+
+            // Map prestasi form value to enum
+            $prestasiEnum = $this->mapPrestasiToEnum($prestasi);
 
             // Check if mahasiswa exists
             $existingMahasiswa = $mahasiswaModel->where('nim', $nim)->first();
@@ -117,11 +120,11 @@ class MahasiswaController extends BaseController
                 $mahasiswaModel->update($existingMahasiswa['id'], [
                     'nama' => $nama,
                     'semester' => $semester,
-                    'angkatan' => $angkatan,
+                    'tahun_masuk' => $tahun_masuk,
                     'ipk' => $ipk,
                     'penghasilan_ortu' => $penghasilan,
                     'jumlah_tanggungan' => $tanggungan,
-                    'prestasi' => $prestasi,
+                    'prestasi_non_akademik' => $prestasiEnum,
                 ]);
                 $mahasiswaId = $existingMahasiswa['id'];
             } else {
@@ -130,11 +133,11 @@ class MahasiswaController extends BaseController
                     'nim' => $nim,
                     'nama' => $nama,
                     'semester' => $semester,
-                    'angkatan' => $angkatan,
+                    'tahun_masuk' => $tahun_masuk,
                     'ipk' => $ipk,
                     'penghasilan_ortu' => $penghasilan,
                     'jumlah_tanggungan' => $tanggungan,
-                    'prestasi' => $prestasi,
+                    'prestasi_non_akademik' => $prestasiEnum,
                 ]);
                 $mahasiswaId = $mahasiswaModel->getInsertID();
             }
@@ -232,18 +235,30 @@ class MahasiswaController extends BaseController
 
     /**
      * Find nilai in detail_kriteria by range or exact match
+     * Untuk range: cek batas_bawah <= value <= batas_atas
+     * Untuk exact: cek batas_bawah == value atau gunakan jenis_kondisi
      */
     private function findNilaiByCriteria(array $details, float|int $value, string $type): float
     {
         foreach ($details as $detail) {
             if ($type === 'range') {
+                // Untuk range (IPK, Penghasilan)
                 $batasBawah = (float) $detail['batas_bawah'];
                 $batasAtas = (float) $detail['batas_atas'];
                 if ($value >= $batasBawah && $value <= $batasAtas) {
                     return (float) $detail['nilai'];
                 }
             } elseif ($type === 'exact') {
-                if ((int) $value == (int) $detail['jenis_kondisi']) {
+                // Untuk exact match (Tanggungan)
+                // Cek batas_bawah sebagai nilai yang dicari (1, 2, 3, 4, atau >5)
+                $batasan = (int) $detail['batas_bawah'];
+                $jenis = trim($detail['jenis_kondisi'] ?? '');
+                
+                if ($jenis === 'gt' && (int) $value > $batasan) {
+                    // Greater than (>5)
+                    return (float) $detail['nilai'];
+                } elseif ($jenis === 'eq' && (int) $value === $batasan) {
+                    // Equal (1, 2, 3, 4)
                     return (float) $detail['nilai'];
                 }
             }
@@ -253,16 +268,56 @@ class MahasiswaController extends BaseController
     }
 
     /**
-     * Find nilai by prestasi name
+     * Find nilai by prestasi name/value
+     * Cari nilai berdasarkan enum prestasi di database
+     * Mapping: universitas, kota, provinsi, nasional → sub_kriteria
      */
     private function findNilaiByPrestasi(array $details, string $prestasi): float
     {
+        $prestasi = strtolower(trim($prestasi));
+        
+        // Mapping prestasi enum ke sub_kriteria pattern
+        $mapping = [
+            'universitas' => 'universitas',
+            'kota' => 'kota',
+            'provinsi' => 'provinsi',
+            'nasional' => 'nasional',
+            'internasional' => 'internasional',
+        ];
+
+        $targetKeyword = $mapping[$prestasi] ?? $prestasi;
+
+        // Cari sub_kriteria yang mengandung keyword
         foreach ($details as $detail) {
-            if (strtolower($detail['sub_kriteria']) === strtolower($prestasi)) {
+            if (strpos(strtolower($detail['sub_kriteria']), $targetKeyword) !== false) {
+                return (float) $detail['nilai'];
+            }
+        }
+
+        // Fallback ke default (tidak berprestasi)
+        foreach ($details as $detail) {
+            if (strpos(strtolower($detail['sub_kriteria']), 'tidak') !== false) {
                 return (float) $detail['nilai'];
             }
         }
 
         return 0;
+    }
+
+    /**
+     * Map form prestasi value to database enum value
+     * Database enum: universitas, kota, provinsi, nasional, internasional
+     */
+    private function mapPrestasiToEnum(string $prestasi): string
+    {
+        $map = [
+            'Tidak berprestasi' => 'universitas', // Fallback to universitas
+            'Universitas' => 'universitas',
+            'Kota' => 'kota',
+            'Provinsi' => 'provinsi',
+            'Nasional' => 'nasional',
+        ];
+
+        return $map[$prestasi] ?? 'universitas';
     }
 }

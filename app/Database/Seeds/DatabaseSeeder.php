@@ -9,6 +9,6 @@ class DatabaseSeeder extends Seeder
     public function run()
     {
         $this->call('MahasiswaSeeder');
-        // PenilaianSeeder tidak perlu - nilai penilaian diisi saat user input via form
+        $this->call('PenilaianSeeder');
     }
 }

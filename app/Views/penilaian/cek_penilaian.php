@@ -31,16 +31,16 @@
                 <table class="table table-bordered table-hover mb-0">
                     <thead class="table-light">
                         <tr>
-                            <th style="width: 200px;">
+                            <th style="width: 250px;">
                                 <i class="fas fa-user"></i> Mahasiswa
                             </th>
                             <?php foreach ($kriteria as $k): ?>
-                                <th class="text-center">
+                                <th class="text-center" style="width: 140px;">
                                     <strong><?= $k['kode'] ?></strong>
                                     <br>
                                     <small><?= $k['kriteria']; ?></small>
                                     <br>
-                                    <span class="badge bg-secondary"><?= $k['bobot'] * 100 ?>%</span>
+                                    <span class="badge bg-secondary"><?= number_format($k['bobot'] * 100, 0) ?>%</span>
                                 </th>
                             <?php endforeach; ?>
                         </tr>
@@ -49,20 +49,26 @@
                         <?php foreach ($mahasiswa as $m): ?>
                             <tr>
                                 <td>
-                                    <strong><?= $m['nama']; ?></strong>
+                                    <strong><?= esc($m['nama']); ?></strong>
                                     <br>
                                     <small class="text-muted">
-                                        NIM: <?= $m['nim']; ?> | Sem: <?= $m['semester']; ?>
+                                        NIM: <?= esc($m['nim']); ?> | Sem: <?= $m['semester']; ?> | Angkatan: <?= esc((string) ($m['tahun_masuk'] ?? '-')); ?>
                                     </small>
                                 </td>
                                 <?php foreach ($kriteria as $k): ?>
-                                    <td class="text-center">
-                                        <h5 class="mb-0">
+                                    <td class="text-center align-middle">
+                                        <h5 class="mb-0 text-info">
                                             <?php 
-                                                $nilai = $penilaianData[$m['id']]['nilai'][$k['id']] ?? 0;
+                                                $nilai = $nilaiTable[$m['id']][$k['id']] ?? 0;
                                                 echo number_format($nilai, 4);
                                             ?>
                                         </h5>
+                                        <small class="text-muted d-block mt-1">
+                                            <?php 
+                                                $atribut = strtoupper($k['atribut']);
+                                                echo "({$atribut})";
+                                            ?>
+                                        </small>
                                     </td>
                                 <?php endforeach; ?>
                             </tr>
