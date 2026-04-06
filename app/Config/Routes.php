@@ -25,6 +25,8 @@ $routes->group('', static function ($routes): void {
 	$routes->get('mahasiswa', 'MahasiswaController::getIndex');
 	$routes->get('mahasiswa/create', 'MahasiswaController::getCreate');
 	$routes->post('mahasiswa/store', 'MahasiswaController::postStore');
+	$routes->get('mahasiswa/input-data', 'MahasiswaController::getInputData');
+	$routes->post('mahasiswa/simpan', 'MahasiswaController::postSimpan');
 	$routes->get('mahasiswa/edit/(:num)', 'MahasiswaController::getEdit/$1');
 	$routes->post('mahasiswa/update/(:num)', 'MahasiswaController::postUpdate/$1');
 	$routes->post('mahasiswa/delete/(:num)', 'MahasiswaController::postDelete/$1');
@@ -42,11 +44,12 @@ $routes->group('', static function ($routes): void {
 	$routes->post('kriteria/detail/delete/(:num)', 'KriteriaController::postDetailDelete/$1');
 
 	$routes->get('penilaian', 'PenilaianController::getIndex');
+	$routes->post('penilaian/cek-penilaian', 'PenilaianController::cekPenilaian');
+	$routes->post('penilaian/hitung-saw', 'PenilaianController::hitungSAW');
+	$routes->post('penilaian/hitung-saw-api', 'PenilaianController::hitungSAWAPI');
 	$routes->get('penilaian/input/(:num)', 'PenilaianController::getInput/$1');
 	$routes->post('penilaian/save/(:num)', 'PenilaianController::postSave/$1');
 	$routes->get('penilaian/form-hitung-saw', 'PenilaianController::formHitungSAW');
-	$routes->post('penilaian/hitung-saw', 'PenilaianController::hitungSAW');
-	$routes->post('penilaian/hitung-saw-api', 'PenilaianController::hitungSAWAPI');
 
 	$routes->get('hasil', 'HasilController::getIndex');
 	$routes->post('hasil/proses', 'HasilController::postProses');

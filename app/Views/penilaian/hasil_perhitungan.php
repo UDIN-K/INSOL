@@ -275,9 +275,9 @@
                     <div class="card-body">
                         <div class="d-flex flex-wrap gap-2 align-items-center">
                             <!-- Action Buttons -->
-                            <a href="<?= base_url('penilaian/form-hitung-saw'); ?>" 
+                            <a href="<?= base_url('penilaian'); ?>" 
                                class="btn btn-primary btn-lg">
-                                <i class="fas fa-redo-alt"></i> Mulai Perhitungan Baru
+                                <i class="fas fa-arrow-left"></i> Kembali Ke Penilaian
                             </a>
                             
                             <button class="btn btn-danger btn-lg" 
@@ -285,10 +285,6 @@
                                 <i class="fas fa-file-pdf"></i> Export ke PDF
                             </button>
                             
-                            <a href="<?= base_url('penilaian'); ?>" class="btn btn-secondary btn-lg">
-                                <i class="fas fa-times-circle"></i> Batal
-                            </a>
-
                             <a href="<?= base_url('hasil?penilaian_ke=' . $penilaian_ke); ?>" 
                                class="btn btn-info btn-lg ms-auto">
                                 <i class="fas fa-chart-bar"></i> Lihat Detail Hasil

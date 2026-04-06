@@ -11,12 +11,20 @@ class PenilaianController extends BaseController
 {
     public function getIndex(): string
     {
-        $mahasiswa = (new MahasiswaModel())->orderBy('nim', 'ASC')->findAll();
-        $jumlahKriteria = (new KriteriaModel())->countAllResults();
+        $mahasiswaModel = new MahasiswaModel();
         $penilaianModel = new PenilaianModel();
+        $kriteriaModel = new KriteriaModel();
 
+        // Get all mahasiswa
+        $mahasiswa = $mahasiswaModel->orderBy('semester', 'ASC')->orderBy('nim', 'ASC')->findAll();
+
+        // Add penilaian status to each mahasiswa
+        $jumlahKriteria = $kriteriaModel->countAllResults();
         foreach ($mahasiswa as &$item) {
-            $count = $penilaianModel->where('mahasiswa_id', $item['id'])->countAllResults();
+            $count = $penilaianModel
+                ->where('mahasiswa_id', $item['id'])
+                ->where('penilaian_ke', 1)
+                ->countAllResults();
             $item['penilaian_lengkap'] = $jumlahKriteria > 0 && $count === $jumlahKriteria;
         }
 
@@ -59,9 +67,56 @@ class PenilaianController extends BaseController
     }
 
     /**
-     * Form untuk select mahasiswa sebelum hitung SAW
+     * Cek/preview penilaian sebelum menghitung SAW
+     * Menampilkan nilai mahasiswa untuk setiap kriteria
      */
-    public function formHitungSAW()
+    public function cekPenilaian()
+    {
+        $selectedMahasiswa = $this->request->getPost('mahasiswa') ?? [];
+
+        if (empty($selectedMahasiswa)) {
+            return redirect()->back()->with('error', 'Pilih minimal 1 mahasiswa untuk dilanjutkan.');
+        }
+
+        $mahasiswaModel = new MahasiswaModel();
+        $penilaianModel = new PenilaianModel();
+        $kriteriaModel = new KriteriaModel();
+
+        // Get selected mahasiswa data
+        $mahasiswa = $mahasiswaModel->whereIn('id', $selectedMahasiswa)
+            ->orderBy('semester', 'ASC')
+            ->orderBy('nim', 'ASC')
+            ->findAll();
+
+        // Get kriteria
+        $kriteria = $kriteriaModel->orderBy('kode', 'ASC')->findAll();
+
+        // Get penilaian values
+        $penilaianData = [];
+        foreach ($mahasiswa as $m) {
+            $penilaian = $penilaianModel
+                ->where('mahasiswa_id', $m['id'])
+                ->where('penilaian_ke', 1)
+                ->findAll();
+
+            $nilaiByKriteria = [];
+            foreach ($penilaian as $p) {
+                $nilaiByKriteria[$p['kriteria_id']] = $p['nilai'];
+            }
+
+            $penilaianData[$m['id']] = [
+                'mahasiswa' => $m,
+                'nilai' => $nilaiByKriteria,
+            ];
+        }
+
+        return view('penilaian/cek_penilaian', [
+            'mahasiswa' => $mahasiswa,
+            'kriteria' => $kriteria,
+            'penilaianData' => $penilaianData,
+            'selectedMahasiswa' => $selectedMahasiswa,
+        ]);
+    }
     {
         $mahasiswaModel = new MahasiswaModel();
         $penilaianModel = new PenilaianModel();
@@ -85,33 +140,39 @@ class PenilaianController extends BaseController
     }
 
     /**
-     * Hitung SAW dan tampilkan step-by-step calculation
+     * Hitung SAW dengan step-by-step breakdown
      */
     public function hitungSAW()
     {
-        $penilaianKe = $this->request->getPost('penilaian_ke') ?? 1;
-        $threshold = $this->request->getPost('threshold') ?? 0.65;
+        $penilaianKe = (int) ($this->request->getPost('penilaian_ke') ?? 1);
+        $threshold = (float) ($this->request->getPost('threshold') ?? 0.65);
         $selectedMahasiswa = $this->request->getPost('mahasiswa') ?? [];
 
         // Validasi minimal 1 mahasiswa dipilih
         if (empty($selectedMahasiswa)) {
-            return redirect()->back()->with('error', 'Pilih minimal 1 mahasiswa untuk dihitung.');
+            return redirect()->to('/penilaian')
+                ->with('error', 'Pilih minimal 1 mahasiswa untuk dihitung.');
         }
 
-        $sawService = new SAWService();
-        $result = $sawService->process((int) $penilaianKe, (float) $threshold, $selectedMahasiswa);
+        try {
+            $sawService = new SAWService();
+            $result = $sawService->process((int) $penilaianKe, (float) $threshold, $selectedMahasiswa);
 
-        if (!$result['success']) {
-            return redirect()->back()->with('error', $result['message'] ?? 'Terjadi kesalahan saat menghitung SAW.');
+            if (!$result['success']) {
+                return redirect()->back()
+                    ->with('error', $result['message'] ?? 'Terjadi kesalahan saat menghitung SAW.');
+            }
+
+            // Return dengan step-by-step breakdown
+            return view('penilaian/hasil_perhitungan', [
+                'result' => $result,
+                'penilaian_ke' => $penilaianKe,
+                'threshold' => $threshold,
+                'selectedMahasiswa' => $selectedMahasiswa,
+            ]);
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Error: ' . $e->getMessage());
         }
-
-        // Return dengan step-by-step breakdown
-        return view('penilaian/hasil_perhitungan', [
-            'result' => $result,
-            'penilaian_ke' => $penilaianKe,
-            'threshold' => $threshold,
-            'selectedMahasiswa' => $selectedMahasiswa,
-        ]);
     }
 
     /**
