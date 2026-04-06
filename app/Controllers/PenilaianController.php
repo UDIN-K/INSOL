@@ -117,6 +117,11 @@ class PenilaianController extends BaseController
             'selectedMahasiswa' => $selectedMahasiswa,
         ]);
     }
+
+    /**
+     * Form untuk select mahasiswa sebelum hitung SAW
+     */
+    public function formHitungSAW()
     {
         $mahasiswaModel = new MahasiswaModel();
         $penilaianModel = new PenilaianModel();
