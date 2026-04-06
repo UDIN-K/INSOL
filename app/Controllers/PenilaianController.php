@@ -68,7 +68,7 @@ class PenilaianController extends BaseController
 
     /**
      * Cek/preview penilaian sebelum menghitung SAW
-     * Menampilkan nilai mahasiswa untuk setiap kriteria
+     * Menampilkan nilai mahasiswa untuk setiap kriteria (di-calculate real-time)
      */
     public function cekPenilaian()
     {
@@ -79,8 +79,8 @@ class PenilaianController extends BaseController
         }
 
         $mahasiswaModel = new MahasiswaModel();
-        $penilaianModel = new PenilaianModel();
         $kriteriaModel = new KriteriaModel();
+        $detailKriteriaModel = new \App\Models\DetailKriteriaModel();
 
         // Get selected mahasiswa data
         $mahasiswa = $mahasiswaModel->whereIn('id', $selectedMahasiswa)
@@ -91,27 +91,25 @@ class PenilaianController extends BaseController
         // Get kriteria
         $kriteria = $kriteriaModel->orderBy('kode', 'ASC')->findAll();
 
-        // Build array untuk akses nilai per mahasiswa dan kriteria
+        // Calculate nilai real-time untuk setiap mahasiswa × kriteria
         // Structure: $nilaiTable[$mahasiswaId][$kriteriaId] = nilai
         $nilaiTable = [];
         
         foreach ($mahasiswa as $m) {
             $nilaiTable[$m['id']] = [];
             
-            // Get penilaian untuk mahasiswa ini
-            $penilaian = $penilaianModel
-                ->where('mahasiswa_id', $m['id'])
-                ->where('penilaian_ke', 1)
-                ->findAll();
-
-            // Fill nilai untuk setiap kriteria
+            // Calculate untuk setiap kriteria
             foreach ($kriteria as $k) {
-                $nilaiTable[$m['id']][$k['id']] = 0;
-            }
-
-            // Override dengan nilai yang ada
-            foreach ($penilaian as $p) {
-                $nilaiTable[$m['id']][$p['kriteria_id']] = (float) $p['nilai'];
+                $nilai = $this->calculateNilaiKriteria(
+                    $k['id'],
+                    (float) $m['ipk'],
+                    (int) $m['penghasilan_ortu'],
+                    (int) $m['jumlah_tanggungan'],
+                    $m['prestasi_non_akademik'],
+                    $detailKriteriaModel
+                );
+                
+                $nilaiTable[$m['id']][$k['id']] = $nilai;
             }
         }
 
@@ -197,5 +195,90 @@ class PenilaianController extends BaseController
         $result = $sawService->process((int) $penilaianKe, (float) $threshold);
 
         return $this->response->setJSON($result);
+    }
+
+    /**
+     * Calculate nilai kriteria berdasarkan data mahasiswa dan detail_kriteria
+     */
+    private function calculateNilaiKriteria(
+        int $kriteriaId,
+        float $ipk,
+        int $penghasilan,
+        int $tanggungan,
+        string $prestasi,
+        $detailModel
+    ): float {
+        $details = $detailModel->where('kriteria_id', $kriteriaId)->findAll();
+
+        if (empty($details)) {
+            return 0;
+        }
+
+        // Calculate berdasarkan kriteria ID (1=IPK, 2=Penghasilan, 3=Tanggungan, 4=Prestasi)
+        if ($kriteriaId == 1) {
+            // IPK (Benefit) - range
+            return $this->findNilaiByCriteria($details, $ipk, 'range');
+        } elseif ($kriteriaId == 2) {
+            // Penghasilan (Cost) - range
+            return $this->findNilaiByCriteria($details, $penghasilan, 'range');
+        } elseif ($kriteriaId == 3) {
+            // Tanggungan (Cost) - exact match
+            return $this->findNilaiByCriteria($details, $tanggungan, 'exact');
+        } elseif ($kriteriaId == 4) {
+            // Prestasi (Benefit) - text match
+            return $this->findNilaiByPrestasi($details, $prestasi);
+        }
+
+        return 0;
+    }
+
+    /**
+     * Find nilai by range atau exact match
+     */
+    private function findNilaiByCriteria(array $details, float|int $value, string $type): float
+    {
+        foreach ($details as $detail) {
+            if ($type === 'range') {
+                $batasBawah = (float) $detail['batas_bawah'];
+                $batasAtas = (float) $detail['batas_atas'];
+                if ($value >= $batasBawah && $value <= $batasAtas) {
+                    return (float) $detail['nilai'];
+                }
+            } elseif ($type === 'exact') {
+                $batasan = (int) $detail['batas_bawah'];
+                $jenis = trim($detail['jenis_kondisi'] ?? '');
+
+                if ($jenis === 'gt' && (int) $value > $batasan) {
+                    return (float) $detail['nilai'];
+                } elseif ($jenis === 'eq' && (int) $value === $batasan) {
+                    return (float) $detail['nilai'];
+                }
+            }
+        }
+
+        return 0;
+    }
+
+    /**
+     * Find nilai by prestasi keyword
+     */
+    private function findNilaiByPrestasi(array $details, string $prestasi): float
+    {
+        $prestasi = strtolower(trim($prestasi));
+
+        foreach ($details as $detail) {
+            if (strpos(strtolower($detail['sub_kriteria']), $prestasi) !== false) {
+                return (float) $detail['nilai'];
+            }
+        }
+
+        // Fallback ke tidak berprestasi
+        foreach ($details as $detail) {
+            if (strpos(strtolower($detail['sub_kriteria']), 'tidak') !== false) {
+                return (float) $detail['nilai'];
+            }
+        }
+
+        return 0;
     }
 }
