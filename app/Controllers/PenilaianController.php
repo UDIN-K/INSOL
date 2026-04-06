@@ -5,6 +5,7 @@ namespace App\Controllers;
 use App\Models\KriteriaModel;
 use App\Models\MahasiswaModel;
 use App\Models\PenilaianModel;
+use App\Services\SAWService;
 
 class PenilaianController extends BaseController
 {
@@ -55,5 +56,75 @@ class PenilaianController extends BaseController
         }
 
         return redirect()->to('/penilaian')->with('success', 'Penilaian disimpan.');
+    }
+
+    /**
+     * Form untuk select mahasiswa sebelum hitung SAW
+     */
+    public function formHitungSAW()
+    {
+        $mahasiswaModel = new MahasiswaModel();
+        $penilaianModel = new PenilaianModel();
+        $jumlahKriteria = (new KriteriaModel())->countAllResults();
+
+        // Ambil mahasiswa yang sudah punya penilaian lengkap
+        $allMahasiswa = $mahasiswaModel->orderBy('nim', 'ASC')->findAll();
+        $mahasiswaLengkap = [];
+
+        foreach ($allMahasiswa as $m) {
+            $count = $penilaianModel->where('mahasiswa_id', $m['id'])->countAllResults();
+            if ($jumlahKriteria > 0 && $count === $jumlahKriteria) {
+                $mahasiswaLengkap[] = $m;
+            }
+        }
+
+        return view('penilaian/form_hitung_saw', [
+            'mahasiswa' => $mahasiswaLengkap,
+            'totalMahasiswa' => count($mahasiswaLengkap),
+        ]);
+    }
+
+    /**
+     * Hitung SAW dan tampilkan step-by-step calculation
+     */
+    public function hitungSAW()
+    {
+        $penilaianKe = $this->request->getPost('penilaian_ke') ?? 1;
+        $threshold = $this->request->getPost('threshold') ?? 0.65;
+        $selectedMahasiswa = $this->request->getPost('mahasiswa') ?? [];
+
+        // Validasi minimal 1 mahasiswa dipilih
+        if (empty($selectedMahasiswa)) {
+            return redirect()->back()->with('error', 'Pilih minimal 1 mahasiswa untuk dihitung.');
+        }
+
+        $sawService = new SAWService();
+        $result = $sawService->process((int) $penilaianKe, (float) $threshold, $selectedMahasiswa);
+
+        if (!$result['success']) {
+            return redirect()->back()->with('error', $result['message'] ?? 'Terjadi kesalahan saat menghitung SAW.');
+        }
+
+        // Return dengan step-by-step breakdown
+        return view('penilaian/hasil_perhitungan', [
+            'result' => $result,
+            'penilaian_ke' => $penilaianKe,
+            'threshold' => $threshold,
+            'selectedMahasiswa' => $selectedMahasiswa,
+        ]);
+    }
+
+    /**
+     * API endpoint untuk return JSON (untuk AJAX)
+     */
+    public function hitungSAWAPI()
+    {
+        $penilaianKe = $this->request->getPost('penilaian_ke') ?? 1;
+        $threshold = $this->request->getPost('threshold') ?? 0.65;
+
+        $sawService = new SAWService();
+        $result = $sawService->process((int) $penilaianKe, (float) $threshold);
+
+        return $this->response->setJSON($result);
     }
 }

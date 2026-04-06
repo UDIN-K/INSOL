@@ -44,6 +44,9 @@ $routes->group('', static function ($routes): void {
 	$routes->get('penilaian', 'PenilaianController::getIndex');
 	$routes->get('penilaian/input/(:num)', 'PenilaianController::getInput/$1');
 	$routes->post('penilaian/save/(:num)', 'PenilaianController::postSave/$1');
+	$routes->get('penilaian/form-hitung-saw', 'PenilaianController::formHitungSAW');
+	$routes->post('penilaian/hitung-saw', 'PenilaianController::hitungSAW');
+	$routes->post('penilaian/hitung-saw-api', 'PenilaianController::hitungSAWAPI');
 
 	$routes->get('hasil', 'HasilController::getIndex');
 	$routes->post('hasil/proses', 'HasilController::postProses');
