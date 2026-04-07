@@ -7,6 +7,74 @@ use App\Models\KriteriaModel;
 
 class KriteriaController extends BaseController
 {
+    private function validateKriteriaInput(?int $excludeId = null): array
+    {
+        $errors = [];
+        $validation = service('validation');
+        $validation->setRules([
+            'kode' => 'required|regex_match[/^C[0-9]+$/i]|max_length[10]',
+            'kriteria' => 'required|min_length[2]|max_length[120]',
+            'bobot' => 'required|decimal|greater_than[0]|less_than_equal_to[1]',
+            'atribut' => 'required|in_list[benefit,cost]',
+        ]);
+
+        if (! $validation->withRequest($this->request)->run()) {
+            $errors = $validation->getErrors();
+        }
+
+        $kode = strtoupper(trim((string) $this->request->getPost('kode')));
+        $existingKode = (new KriteriaModel())->where('kode', $kode);
+        if ($excludeId !== null) {
+            $existingKode = $existingKode->where('id !=', $excludeId);
+        }
+        if ($existingKode->first() !== null) {
+            $errors['kode'] = 'Kode kriteria sudah dipakai.';
+        }
+
+        return $errors;
+    }
+
+    private function validateDetailInput(): array
+    {
+        $validation = service('validation');
+        $validation->setRules([
+            'kriteria_id' => 'required|integer',
+            'jenis_kondisi' => 'required|in_list[text,range,eq,gt,gte,lt,lte]',
+            'nilai' => 'required|decimal|greater_than_equal_to[0]|less_than_equal_to[1]',
+            'sub_kriteria' => 'permit_empty|max_length[150]',
+            'batas_bawah' => 'permit_empty|decimal',
+            'batas_atas' => 'permit_empty|decimal',
+        ]);
+
+        $errors = [];
+        if (! $validation->withRequest($this->request)->run()) {
+            $errors = $validation->getErrors();
+        }
+
+        $jenis = (string) ($this->request->getPost('jenis_kondisi') ?: 'text');
+        $subKriteria = trim((string) $this->request->getPost('sub_kriteria'));
+        $batasBawah = trim((string) $this->request->getPost('batas_bawah'));
+        $batasAtas = trim((string) $this->request->getPost('batas_atas'));
+
+        if ($jenis === 'text' && $subKriteria === '') {
+            $errors['sub_kriteria'] = 'Sub kriteria wajib diisi untuk jenis text.';
+        }
+
+        if ($jenis !== 'text' && $batasBawah === '') {
+            $errors['batas_bawah'] = 'Batas bawah wajib diisi untuk jenis numerik.';
+        }
+
+        if ($jenis === 'range' && $batasAtas === '') {
+            $errors['batas_atas'] = 'Batas atas wajib diisi untuk jenis range.';
+        }
+
+        if ($jenis === 'range' && $batasBawah !== '' && $batasAtas !== '' && (float) $batasBawah > (float) $batasAtas) {
+            $errors['batas_atas'] = 'Batas atas harus lebih besar atau sama dengan batas bawah.';
+        }
+
+        return $errors;
+    }
+
     private function buildSubKriteriaLabel(string $jenis, ?string $subKriteria, ?string $batasBawah, ?string $batasAtas): string
     {
         $label = trim((string) $subKriteria);
@@ -43,10 +111,13 @@ class KriteriaController extends BaseController
             $totalBobot += (float) $item['bobot'];
         }
 
+        $bobotStatus = abs($totalBobot - 1.0) < 0.0001 ? 'ideal' : ($totalBobot < 1 ? 'kurang' : 'lebih');
+
         return view('kriteria/index', [
             'kriteria' => $kriteria,
             'detailKriteria' => $detailKriteria,
             'totalBobot' => $totalBobot,
+            'bobotStatus' => $bobotStatus,
         ]);
     }
 
@@ -57,6 +128,11 @@ class KriteriaController extends BaseController
 
     public function postStore()
     {
+        $errors = $this->validateKriteriaInput();
+        if (! empty($errors)) {
+            return redirect()->back()->withInput()->with('validation_errors', $errors)->with('error', 'Validasi data kriteria gagal.');
+        }
+
         (new KriteriaModel())->insert([
             'kode' => strtoupper((string) $this->request->getPost('kode')),
             'kriteria' => $this->request->getPost('kriteria'),
@@ -78,6 +154,11 @@ class KriteriaController extends BaseController
 
     public function postUpdate(int $id)
     {
+        $errors = $this->validateKriteriaInput($id);
+        if (! empty($errors)) {
+            return redirect()->back()->withInput()->with('validation_errors', $errors)->with('error', 'Validasi data kriteria gagal.');
+        }
+
         (new KriteriaModel())->update($id, [
             'kode' => strtoupper((string) $this->request->getPost('kode')),
             'kriteria' => $this->request->getPost('kriteria'),
@@ -106,6 +187,11 @@ class KriteriaController extends BaseController
 
     public function postDetailStore()
     {
+        $errors = $this->validateDetailInput();
+        if (! empty($errors)) {
+            return redirect()->back()->withInput()->with('validation_errors', $errors)->with('error', 'Validasi detail kriteria gagal.');
+        }
+
         $jenis = (string) ($this->request->getPost('jenis_kondisi') ?: 'text');
         $batasBawah = $this->request->getPost('batas_bawah');
         $batasAtas = $this->request->getPost('batas_atas');
@@ -134,6 +220,11 @@ class KriteriaController extends BaseController
 
     public function postDetailUpdate(int $id)
     {
+        $errors = $this->validateDetailInput();
+        if (! empty($errors)) {
+            return redirect()->back()->withInput()->with('validation_errors', $errors)->with('error', 'Validasi detail kriteria gagal.');
+        }
+
         $jenis = (string) ($this->request->getPost('jenis_kondisi') ?: 'text');
         $batasBawah = $this->request->getPost('batas_bawah');
         $batasAtas = $this->request->getPost('batas_atas');

@@ -70,7 +70,7 @@ abstract class BaseController extends Controller
                 $target .= '?' . $query;
             }
 
-            redirect()->to('/dashboard?login=1&next=' . rawurlencode($target))->send();
+            redirect()->to('/login?next=' . rawurlencode($target))->send();
             exit;
         }
 

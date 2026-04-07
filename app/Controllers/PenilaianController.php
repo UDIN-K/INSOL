@@ -51,6 +51,26 @@ class PenilaianController extends BaseController
         $nilaiInput = (array) $this->request->getPost('nilai');
         $model = new PenilaianModel();
 
+        $validationErrors = [];
+        foreach ($kriteria as $item) {
+            $kriteriaId = (int) $item['id'];
+            $valueRaw = (string) ($nilaiInput[$kriteriaId] ?? '');
+
+            if ($valueRaw === '' || ! is_numeric($valueRaw)) {
+                $validationErrors[] = 'Nilai untuk kriteria ' . (string) $item['kode'] . ' wajib angka.';
+                continue;
+            }
+
+            $parsed = (float) $valueRaw;
+            if ($parsed < 0 || $parsed > 1) {
+                $validationErrors[] = 'Nilai untuk kriteria ' . (string) $item['kode'] . ' harus antara 0 sampai 1.';
+            }
+        }
+
+        if (! empty($validationErrors)) {
+            return redirect()->back()->withInput()->with('validation_errors', $validationErrors)->with('error', 'Validasi penilaian gagal.');
+        }
+
         foreach ($kriteria as $item) {
             $kriteriaId = (int) $item['id'];
             $nilai = (float) ($nilaiInput[$kriteriaId] ?? 0);

@@ -168,41 +168,30 @@ class HasilController extends BaseController
         return 0.0;
     }
 
-    public function getIndex(): string
+    private function buildSawComputation(int $kuota): array
     {
-        $rows = (new HasilModel())
-            ->select('hasil.*, mahasiswa.nim, mahasiswa.nama')
-            ->join('mahasiswa', 'mahasiswa.id = hasil.mahasiswa_id')
-            ->orderBy('penilaian_ke', 'DESC')
-            ->orderBy('ranking', 'ASC')
-            ->findAll();
-
-        return view('hasil/index', ['rows' => $rows]);
-    }
-
-    public function postProses()
-    {
-        $kriteria = (new KriteriaModel())->findAll();
-        $mahasiswa = (new MahasiswaModel())->findAll();
+        $kriteria = (new KriteriaModel())->orderBy('kode', 'ASC')->findAll();
+        $mahasiswa = (new MahasiswaModel())->orderBy('nim', 'ASC')->findAll();
         $penilaian = (new PenilaianModel())->findAll();
         $detailRows = (new DetailKriteriaModel())->findAll();
+
+        if (empty($kriteria) || empty($mahasiswa)) {
+            return ['error' => 'Data kriteria atau mahasiswa belum tersedia.'];
+        }
+
+        $bobotTotal = array_sum(array_map(static fn ($k) => (float) $k['bobot'], $kriteria));
+        if ($bobotTotal <= 0) {
+            return ['error' => 'Total bobot harus lebih dari 0.'];
+        }
+
         $detailByKriteria = [];
         foreach ($detailRows as $detail) {
             $detailByKriteria[(int) $detail['kriteria_id']][] = $detail;
         }
 
-        if (empty($kriteria) || empty($mahasiswa)) {
-            return redirect()->to('/hasil')->with('error', 'Data belum lengkap untuk proses SAW.');
-        }
-
-        $bobotTotal = array_sum(array_map(static fn ($k) => (float) $k['bobot'], $kriteria));
-        if ($bobotTotal <= 0) {
-            return redirect()->to('/hasil')->with('error', 'Total bobot harus lebih dari 0.');
-        }
-
         $nilai = [];
         foreach ($penilaian as $p) {
-            $nilai[$p['mahasiswa_id']][$p['kriteria_id']] = (float) $p['nilai'];
+            $nilai[(int) $p['mahasiswa_id']][(int) $p['kriteria_id']] = (float) $p['nilai'];
         }
 
         foreach ($mahasiswa as $m) {
@@ -223,9 +212,10 @@ class HasilController extends BaseController
                 $details = $detailByKriteria[$kid] ?? [];
                 if (is_numeric($source)) {
                     $nilai[$mid][$kid] = $this->resolveNumericDetailScore((float) $source, $details);
-                } else {
-                    $nilai[$mid][$kid] = $this->resolveTextDetailScore((string) $source, $details);
+                    continue;
                 }
+
+                $nilai[$mid][$kid] = $this->resolveTextDetailScore((string) $source, $details);
             }
         }
 
@@ -235,42 +225,116 @@ class HasilController extends BaseController
             $kid = (int) $k['id'];
             $arr = [];
             foreach ($mahasiswa as $m) {
-                $arr[] = $nilai[$m['id']][$kid] ?? 0;
+                $arr[] = (float) ($nilai[(int) $m['id']][$kid] ?? 0);
             }
             $max[$kid] = max($arr);
             $min[$kid] = min($arr);
         }
 
+        $normalisasi = [];
+        $preferensi = [];
         $scores = [];
+
         foreach ($mahasiswa as $m) {
+            $mid = (int) $m['id'];
             $pref = 0.0;
+            $detailKomponen = [];
+
             foreach ($kriteria as $k) {
                 $kid = (int) $k['id'];
-                $v = (float) ($nilai[$m['id']][$kid] ?? 0);
+                $v = (float) ($nilai[$mid][$kid] ?? 0);
                 $w = ((float) $k['bobot']) / $bobotTotal;
                 $n = (($k['atribut'] ?? 'benefit') === 'cost')
                     ? ($v > 0 ? $min[$kid] / $v : 0)
                     : ($max[$kid] > 0 ? $v / $max[$kid] : 0);
-                $pref += $n * $w;
+
+                $normalisasi[$mid][$kid] = $n;
+                $nilaiTerbobot = $n * $w;
+                $pref += $nilaiTerbobot;
+
+                $detailKomponen[] = [
+                    'kriteria_id' => $kid,
+                    'kode' => (string) $k['kode'],
+                    'kriteria' => (string) $k['kriteria'],
+                    'raw' => $v,
+                    'normalisasi' => $n,
+                    'bobot' => $w,
+                    'terbobot' => $nilaiTerbobot,
+                    'atribut' => (string) $k['atribut'],
+                ];
             }
-            $scores[] = ['mahasiswa_id' => $m['id'], 'skor' => round($pref, 6)];
+
+            $skorAkhir = round($pref, 6);
+            $scores[] = [
+                'mahasiswa_id' => $mid,
+                'nim' => (string) $m['nim'],
+                'nama' => (string) $m['nama'],
+                'skor' => $skorAkhir,
+            ];
+
+            $preferensi[$mid] = [
+                'skor' => $skorAkhir,
+                'komponen' => $detailKomponen,
+            ];
         }
 
         usort($scores, static fn ($a, $b) => $b['skor'] <=> $a['skor']);
+        foreach ($scores as $i => &$score) {
+            $score['ranking'] = $i + 1;
+            $score['status_lolos'] = ($i + 1) <= $kuota ? 'Lolos' : 'Tidak Lolos';
+        }
 
+        return [
+            'kriteria' => $kriteria,
+            'mahasiswa' => $mahasiswa,
+            'bobotTotal' => $bobotTotal,
+            'nilai' => $nilai,
+            'normalisasi' => $normalisasi,
+            'preferensi' => $preferensi,
+            'ranking' => $scores,
+            'kuota' => $kuota,
+        ];
+    }
+
+    public function getIndex(): string
+    {
+        $rows = (new HasilModel())
+            ->select('hasil.*, mahasiswa.nim, mahasiswa.nama')
+            ->join('mahasiswa', 'mahasiswa.id = hasil.mahasiswa_id')
+            ->orderBy('penilaian_ke', 'DESC')
+            ->orderBy('ranking', 'ASC')
+            ->findAll();
+
+        $kuotaPreview = max(1, (int) ($this->request->getGet('kuota_preview') ?? 3));
+        $preview = $this->buildSawComputation($kuotaPreview);
+
+        return view('hasil/index', [
+            'rows' => $rows,
+            'preview' => $preview,
+            'kuotaPreview' => $kuotaPreview,
+        ]);
+    }
+
+    public function postProses()
+    {
         $kuota = max(1, (int) $this->request->getPost('kuota'));
+        $computed = $this->buildSawComputation($kuota);
+        if (isset($computed['error'])) {
+            return redirect()->to('/hasil')->with('error', (string) $computed['error']);
+        }
+
+        $scores = $computed['ranking'];
         $model = new HasilModel();
         $last = $model->selectMax('penilaian_ke')->first();
         $penilaianKe = (int) ($last['penilaian_ke'] ?? 0) + 1;
 
-        foreach ($scores as $i => $item) {
-            $rank = $i + 1;
+        foreach ($scores as $item) {
             $model->insert([
                 'mahasiswa_id' => $item['mahasiswa_id'],
                 'penilaian_ke' => $penilaianKe,
                 'skor' => $item['skor'],
-                'ranking' => $rank,
-                'status_lolos' => $rank <= $kuota ? 'Lolos' : 'Tidak Lolos',
+                'ranking' => $item['ranking'],
+                'status_lolos' => $item['status_lolos'],
             ]);
         }
 

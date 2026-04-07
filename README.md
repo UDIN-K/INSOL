@@ -6,18 +6,19 @@ Project ini dipakai untuk kelola data Mahasiswa, Kriteria, Penilaian, dan Hasil 
 ## Fitur Utama
 
 - Dashboard ringkasan data
+- Login & logout dengan proteksi halaman
 - Manajemen Mahasiswa
 - Manajemen Kriteria
 - Input Penilaian
-- Hasil ranking / kelulusan
-- Login popup dan proteksi halaman
+- Proses SAW (matriks keputusan, normalisasi, nilai preferensi)
+- Hasil ranking / status kelulusan
 
 ## Stack
 
 - PHP 8.2+
 - CodeIgniter 4
 - MariaDB / MySQL
-- Bootstrap Icons
+- PrimeIcons
 
 ## Menjalankan Project
 

@@ -6,6 +6,51 @@ use App\Models\MahasiswaModel;
 
 class MahasiswaController extends BaseController
 {
+    private function mahasiswaRules(): array
+    {
+        return [
+            'nim' => 'required|min_length[5]|max_length[30]',
+            'nama' => 'required|min_length[3]|max_length[120]',
+            'email' => 'permit_empty|valid_email|max_length[120]',
+            'semester' => 'permit_empty|integer|greater_than_equal_to[1]|less_than_equal_to[14]',
+            'tahun_masuk' => 'permit_empty|integer|greater_than_equal_to[2000]|less_than_equal_to[2100]',
+            'ipk' => 'permit_empty|decimal|greater_than_equal_to[0]|less_than_equal_to[4]',
+            'penghasilan_ortu' => 'permit_empty|integer|greater_than_equal_to[0]',
+            'jumlah_tanggungan' => 'permit_empty|integer|greater_than_equal_to[0]|less_than_equal_to[20]',
+            'prestasi_non_akademik' => 'permit_empty|in_list[universitas,kota,provinsi,nasional,internasional]',
+        ];
+    }
+
+    private function validateMahasiswaInput(): ?array
+    {
+        $validation = service('validation');
+        $validation->setRules($this->mahasiswaRules());
+
+        if (! $validation->withRequest($this->request)->run()) {
+            return $validation->getErrors();
+        }
+
+        return null;
+    }
+
+    private function validateUniqueNim(?int $excludeId = null): ?string
+    {
+        $nim = trim((string) $this->request->getPost('nim'));
+        $model = new MahasiswaModel();
+        $query = $model->where('nim', $nim);
+
+        if ($excludeId !== null) {
+            $query = $query->where('id !=', $excludeId);
+        }
+
+        $existing = $query->first();
+        if ($existing !== null) {
+            return 'NIM sudah digunakan mahasiswa lain.';
+        }
+
+        return null;
+    }
+
     private function mahasiswaPayload(): array
     {
         return [
@@ -43,6 +88,16 @@ class MahasiswaController extends BaseController
 
     public function postStore()
     {
+        $errors = $this->validateMahasiswaInput() ?? [];
+        $nimError = $this->validateUniqueNim();
+        if ($nimError !== null) {
+            $errors['nim'] = $nimError;
+        }
+
+        if (! empty($errors)) {
+            return redirect()->back()->withInput()->with('validation_errors', $errors)->with('error', 'Validasi data mahasiswa gagal.');
+        }
+
         (new MahasiswaModel())->insert($this->mahasiswaPayload());
 
         return redirect()->to('/mahasiswa')->with('success', 'Data tersimpan.');
@@ -59,6 +114,16 @@ class MahasiswaController extends BaseController
 
     public function postUpdate(int $id)
     {
+        $errors = $this->validateMahasiswaInput() ?? [];
+        $nimError = $this->validateUniqueNim($id);
+        if ($nimError !== null) {
+            $errors['nim'] = $nimError;
+        }
+
+        if (! empty($errors)) {
+            return redirect()->back()->withInput()->with('validation_errors', $errors)->with('error', 'Validasi data mahasiswa gagal.');
+        }
+
         (new MahasiswaModel())->update($id, $this->mahasiswaPayload());
 
         return redirect()->to('/mahasiswa')->with('success', 'Data diperbarui.');
