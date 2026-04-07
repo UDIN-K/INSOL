@@ -46,5 +46,9 @@ $routes->group('', static function ($routes): void {
 	$routes->post('penilaian/save/(:num)', 'PenilaianController::postSave/$1');
 
 	$routes->get('hasil', 'HasilController::getIndex');
+	$routes->get('hasil/history', 'HasilController::getHistory');
+	$routes->get('hasil/preview', 'HasilController::getPreview');
 	$routes->post('hasil/proses', 'HasilController::postProses');
+	$routes->post('hasil/confirm', 'HasilController::postConfirm');
+	$routes->get('hasil/cancel', 'HasilController::cancelProses');
 });

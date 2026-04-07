@@ -168,12 +168,24 @@ class HasilController extends BaseController
         return 0.0;
     }
 
-    private function buildSawComputation(int $kuota): array
+    private function buildSawComputation(float $skorMinimum, array $selectedMahasiswaIds = []): array
     {
         $kriteria = (new KriteriaModel())->orderBy('kode', 'ASC')->findAll();
-        $mahasiswa = (new MahasiswaModel())->orderBy('nim', 'ASC')->findAll();
+        $allMahasiswa = (new MahasiswaModel())->orderBy('nim', 'ASC')->findAll();
         $penilaian = (new PenilaianModel())->findAll();
         $detailRows = (new DetailKriteriaModel())->findAll();
+
+        // Filter mahasiswa yang dipilih
+        $mahasiswa = [];
+        if (!empty($selectedMahasiswaIds)) {
+            foreach ($allMahasiswa as $m) {
+                if (in_array((int) $m['id'], $selectedMahasiswaIds, true)) {
+                    $mahasiswa[] = $m;
+                }
+            }
+        } else {
+            $mahasiswa = $allMahasiswa;
+        }
 
         if (empty($kriteria) || empty($mahasiswa)) {
             return ['error' => 'Data kriteria atau mahasiswa belum tersedia.'];
@@ -281,7 +293,7 @@ class HasilController extends BaseController
         usort($scores, static fn ($a, $b) => $b['skor'] <=> $a['skor']);
         foreach ($scores as $i => &$score) {
             $score['ranking'] = $i + 1;
-            $score['status_lolos'] = ($i + 1) <= $kuota ? 'Lolos' : 'Tidak Lolos';
+            $score['status_lolos'] = $score['skor'] >= $skorMinimum ? 'Lolos' : 'Tidak Lolos';
         }
 
         return [
@@ -292,35 +304,138 @@ class HasilController extends BaseController
             'normalisasi' => $normalisasi,
             'preferensi' => $preferensi,
             'ranking' => $scores,
-            'kuota' => $kuota,
+            'skorMinimum' => $skorMinimum,
         ];
     }
 
     public function getIndex(): string
     {
-        $rows = (new HasilModel())
-            ->select('hasil.*, mahasiswa.nim, mahasiswa.nama')
-            ->join('mahasiswa', 'mahasiswa.id = hasil.mahasiswa_id')
-            ->orderBy('penilaian_ke', 'DESC')
-            ->orderBy('ranking', 'ASC')
-            ->findAll();
+        $search = (string) $this->request->getGet('search');
+        $semester = (string) $this->request->getGet('semester');
 
-        $kuotaPreview = max(1, (int) ($this->request->getGet('kuota_preview') ?? 3));
-        $preview = $this->buildSawComputation($kuotaPreview);
+        // Get all unique semesters for filter
+        $db = \Config\Database::connect();
+        $semesters = $db->query('SELECT DISTINCT semester FROM mahasiswa WHERE semester IS NOT NULL ORDER BY semester ASC')->getResultArray();
+
+        $mahasiswaModel = new MahasiswaModel();
+        $query = $mahasiswaModel;
+
+        // Apply filters
+        if ($search !== '') {
+            $query = $query->groupStart()
+                ->like('nim', $search)
+                ->orLike('nama', $search)
+                ->groupEnd();
+        }
+
+        if ($semester !== '') {
+            $query = $query->where('semester', $semester);
+        }
+
+        $mahasiswa = $query->orderBy('nim', 'ASC')->findAll();
+        $penilaianModel = new PenilaianModel();
+        $jumlahKriteria = (new KriteriaModel())->countAllResults();
+
+        foreach ($mahasiswa as &$item) {
+            $count = $penilaianModel->where('mahasiswa_id', $item['id'])->countAllResults();
+            $item['penilaian_lengkap'] = $jumlahKriteria > 0 && $count === $jumlahKriteria;
+        }
+
+        $hasilModel = new HasilModel();
+        foreach ($mahasiswa as &$item) {
+            $lastResult = $hasilModel->where('mahasiswa_id', $item['id'])
+                ->orderBy('penilaian_ke', 'DESC')
+                ->first();
+            $item['hasil_tersimpan'] = $lastResult !== null;
+            $item['status_hasil'] = $lastResult['status_lolos'] ?? null;
+        }
 
         return view('hasil/index', [
-            'rows' => $rows,
-            'preview' => $preview,
-            'kuotaPreview' => $kuotaPreview,
+            'mahasiswa' => $mahasiswa,
+            'semesters' => $semesters,
+            'jumlahKriteria' => $jumlahKriteria,
+            'search' => $search,
+            'semester' => $semester,
         ]);
+    }
+
+    public function getHistory(): string
+    {
+        $hasilModel = new HasilModel();
+        
+        // Get distinct penilaian_ke values
+        $penilaianKeData = $hasilModel
+            ->distinct()
+            ->select('penilaian_ke')
+            ->orderBy('penilaian_ke', 'DESC')
+            ->findAll();
+
+        $groupedByPenilaian = [];
+        foreach ($penilaianKeData as $penilaianData) {
+            $penilaianKe = (int) $penilaianData['penilaian_ke'];
+            $rows = (new HasilModel())
+                ->select('hasil.*, mahasiswa.nim, mahasiswa.nama')
+                ->join('mahasiswa', 'mahasiswa.id = hasil.mahasiswa_id')
+                ->where('penilaian_ke', $penilaianKe)
+                ->orderBy('ranking', 'ASC')
+                ->findAll();
+            
+            $groupedByPenilaian[$penilaianKe] = $rows;
+        }
+
+        return view('hasil/history', ['groupedByPenilaian' => $groupedByPenilaian]);
+    }
+
+    public function getCari(): string
+    {
+        return $this->getIndex();
     }
 
     public function postProses()
     {
-        $kuota = max(1, (int) $this->request->getPost('kuota'));
-        $computed = $this->buildSawComputation($kuota);
+        $skorMinimum = max(0, min(1, (float) $this->request->getPost('skor_minimum')));
+        $selectedMahasiswaIds = array_map('intval', (array) $this->request->getPost('mahasiswa_ids') ?? []);
+
+        log_message('debug', 'postProses: skorMinimum=' . $skorMinimum . ', selected=' . count($selectedMahasiswaIds));
+
+        if (empty($selectedMahasiswaIds)) {
+            log_message('error', 'postProses: No mahasiswa selected');
+            return redirect()->back()->with('error', 'Silakan pilih minimal satu mahasiswa untuk diproses.');
+        }
+
+        $computed = $this->buildSawComputation($skorMinimum, $selectedMahasiswaIds);
+        
+        log_message('debug', 'postProses: computed keys=' . implode(',', array_keys($computed)));
+        
         if (isset($computed['error'])) {
-            return redirect()->to('/hasil')->with('error', (string) $computed['error']);
+            log_message('error', 'postProses: computation error=' . $computed['error']);
+            return redirect()->back()->with('error', (string) $computed['error']);
+        }
+
+        // Simpan hasil komputasi ke session untuk ditampilkan di preview halaman
+        session()->set('saw_computation', $computed);
+        log_message('debug', 'postProses: saved to session, redirecting to preview');
+        
+        return redirect()->to('/hasil/preview');
+    }
+
+    public function getPreview(): string
+    {
+        $computed = session()->get('saw_computation');
+        
+        if (!$computed) {
+            return redirect()->to('/hasil')->with('error', 'Data perhitungan tidak ditemukan. Silakan ulangi proses.');
+        }
+
+        return view('hasil/preview', $computed);
+    }
+
+    public function postConfirm()
+    {
+        $computed = session()->get('saw_computation');
+        
+        if (!$computed) {
+            return redirect()->back()->with('error', 'No computation data found.');
         }
 
         $scores = $computed['ranking'];
@@ -338,6 +453,16 @@ class HasilController extends BaseController
             ]);
         }
 
+        // Clear session
+        session()->remove('saw_computation');
+
         return redirect()->to('/hasil')->with('success', 'Perhitungan SAW selesai untuk penilaian ke-' . $penilaianKe . '.');
+    }
+
+    public function cancelProses()
+    {
+        // Clear session dan kembali ke hasil
+        session()->remove('saw_computation');
+        return redirect()->to('/hasil');
     }
 }
