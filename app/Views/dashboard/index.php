@@ -55,7 +55,7 @@
             <a class="btn" href="/mahasiswa"><i class="pi pi-users"></i> Kelola Mahasiswa</a>
             <a class="btn btn-secondary" href="/kriteria"><i class="pi pi-sliders-h"></i> Kelola Kriteria</a>
             <a class="btn btn-success" href="/penilaian"><i class="pi pi-pencil"></i> Input Penilaian</a>
-            <a class="btn" href="/hasil"><i class="pi pi-trophy"></i> Lihat Hasil</a>
+            <a class="btn" href="/hasil"><i class="pi pi-trophy"></i> Kalkulasi Hasil</a>
         </div>
         <div class="mini-list" style="margin-top:14px;">
             <div class="mini-row"><span>Langkah 1</span><strong>Isi Data Mahasiswa</strong></div>
