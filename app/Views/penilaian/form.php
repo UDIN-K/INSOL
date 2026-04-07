@@ -1,6 +1,11 @@
 <?= $this->extend('layouts/main') ?>
 <?= $this->section('content') ?>
-<h2>Input Nilai - <?= esc($mahasiswa['nama'] ?? '') ?> (<?= esc($mahasiswa['nim'] ?? '') ?>)</h2>
+<div class="dash-title-row">
+	<h2>Input Nilai - <?= esc($mahasiswa['nama'] ?? '') ?> (<?= esc($mahasiswa['nim'] ?? '') ?>)</h2>
+	<div class="dash-breadcrumb">Proses / Penilaian / Form</div>
+</div>
+
+<div class="card">
 <form action="/penilaian/save/<?= esc((string) ($mahasiswa['id'] ?? 0)) ?>" method="post">
 <?= csrf_field() ?>
 <table>
@@ -18,4 +23,5 @@
 </table>
 <p style="margin-top:12px"><button class="btn" type="submit">Simpan</button> <a class="btn btn-secondary" href="/penilaian">Kembali</a></p>
 </form>
+</div>
 <?= $this->endSection() ?>

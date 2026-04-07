@@ -27,34 +27,37 @@ class AuthController extends BaseController
         }
 
         $next = $this->getSafeNextTarget((string) $this->request->getGet('next'));
-        return redirect()->to('/dashboard?login=1&next=' . rawurlencode($next));
+        return view('auth/login', ['next' => $next]);
     }
 
     public function postLogin()
     {
         $username = (string) $this->request->getPost('username');
         $password = (string) $this->request->getPost('password');
-        $isPopup = ((string) $this->request->getGet('popup')) === '1' || ((string) $this->request->getPost('popup')) === '1';
         $next = $this->getSafeNextTarget((string) $this->request->getPost('next'));
+        $loginRedirect = '/login?next=' . rawurlencode($next);
 
-        $popupRedirect = '/dashboard?login=1&next=' . rawurlencode($next);
+        $validation = service('validation');
+        $validation->setRules([
+            'username' => 'required|min_length[3]|max_length[50]',
+            'password' => 'required|min_length[6]|max_length[100]',
+        ]);
+
+        if (! $validation->withRequest($this->request)->run()) {
+            return redirect()->to($loginRedirect)
+                ->withInput()
+                ->with('validation_errors', $validation->getErrors())
+                ->with('error', 'Validasi login gagal.');
+        }
 
         if ($username === '' || $password === '') {
-            if ($isPopup) {
-                return redirect()->to($popupRedirect)->withInput()->with('error', 'Username dan password wajib diisi.');
-            }
-
-            return redirect()->to($popupRedirect)->withInput()->with('error', 'Username dan password wajib diisi.');
+            return redirect()->to($loginRedirect)->withInput()->with('error', 'Username dan password wajib diisi.');
         }
 
         $user = (new UserModel())->where('username', $username)->first();
 
         if (! $user || ! password_verify($password, (string) $user['password'])) {
-            if ($isPopup) {
-                return redirect()->to($popupRedirect)->withInput()->with('error', 'Login gagal.');
-            }
-
-            return redirect()->to($popupRedirect)->withInput()->with('error', 'Login gagal.');
+            return redirect()->to($loginRedirect)->withInput()->with('error', 'Login gagal.');
         }
 
         session()->set([

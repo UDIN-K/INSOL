@@ -1,122 +1,122 @@
-name: Duck Dance README
+# name: Duck Dance README
 
-on:
-  workflow_dispatch:
-  schedule:
-    - cron: "*/30 * * * *"
+# on:
+#   workflow_dispatch:
+#   schedule:
+#     - cron: "*/30 * * * *"
 
-permissions:
-  contents: write
+# permissions:
+#   contents: write
 
-jobs:
-  dance:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+# jobs:
+#   dance:
+#     runs-on: ubuntu-latest
+#     steps:
+#       - name: Checkout repository
+#         uses: actions/checkout@v4
 
-      - name: Rotate duck ASCII frame in README
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-          import re
+#       - name: Rotate duck ASCII frame in README
+#         run: |
+#           python - <<'PY'
+#           from pathlib import Path
+#           import re
 
-          readme = Path("README.md")
-          state_file = Path(".duck-state")
+#           readme = Path("README.md")
+#           state_file = Path(".duck-state")
 
-          frames = [
-              "\n".join([
-                  "            .-====-.",
-                  "           /  _  _  \\",
-                  "          |  (o)(o)  |",
-                  "          |    __    |  <- kacamata 😎",
-                  "       ___|   /__\\   |___",
-                  "     /    |    /\\    |    \\",
-                  "    /  🦆 |   /  \\   | 🦏  \\",
-                  "   |      |  /____\\  |      |",
-                  "    \\      \\_/ || \\_/      /",
-                  "     \\_________||_________/",
-                  "         _/\\_      _/\\_",
-                  "        /_/\\_\\    /_/\\_\\",
-                  "           ♪        ♪",
-              ]),
-              "\n".join([
-                  "            .-====-.",
-                  "           /  _  _  \\",
-                  "          |  (o)(o)  |",
-                  "          |    __    |  <- kacamata 😎",
-                  "       ___|   /__\\   |___",
-                  "     /    |    /\\    |    \\",
-                  "    /  🦆 |   /  \\   | 🦏  \\",
-                  "   |      |  /____\\  |      |",
-                  "    \\      \\_/ || \\_/      /",
-                  "     \\_________||_________/",
-                  "         _/\\_      _/\\_",
-                  "        /_/\\_\\    /_/\\_\\",
-                  "          ♫          ♪",
-              ]),
-              "\n".join([
-                  "            .-====-.",
-                  "           /  _  _  \\",
-                  "          |  (o)(o)  |",
-                  "          |    __    |  <- kacamata 😎",
-                  "       ___|   /__\\   |___",
-                  "     /    |    /\\    |    \\",
-                  "    /  🦆 |   /  \\   | 🦏  \\",
-                  "   |      |  /____\\  |      |",
-                  "    \\      \\_/ || \\_/      /",
-                  "     \\_________||_________/",
-                  "         _/\\_      _/\\_",
-                  "        /_/\\_\\    /_/\\_\\",
-                  "        ♪     ♪       ♫",
-              ]),
-              "\n".join([
-                  "            .-====-.",
-                  "           /  _  _  \\",
-                  "          |  (o)(o)  |",
-                  "          |    __    |  <- kacamata 😎",
-                  "       ___|   /__\\   |___",
-                  "     /    |    /\\    |    \\",
-                  "    /  🦆 |   /  \\   | 🦏  \\",
-                  "   |      |  /____\\  |      |",
-                  "    \\      \\_/ || \\_/      /",
-                  "     \\_________||_________/",
-                  "         _/\\_      _/\\_",
-                  "        /_/\\_\\    /_/\\_\\",
-                  "        ♫      ♪      ♫",
-              ]),
-          ]
+#           frames = [
+#               "\n".join([
+#                   "            .-====-.",
+#                   "           /  _  _  \\",
+#                   "          |  (o)(o)  |",
+#                   "          |    __    |  <- kacamata 😎",
+#                   "       ___|   /__\\   |___",
+#                   "     /    |    /\\    |    \\",
+#                   "    /  🦆 |   /  \\   | 🦏  \\",
+#                   "   |      |  /____\\  |      |",
+#                   "    \\      \\_/ || \\_/      /",
+#                   "     \\_________||_________/",
+#                   "         _/\\_      _/\\_",
+#                   "        /_/\\_\\    /_/\\_\\",
+#                   "           ♪        ♪",
+#               ]),
+#               "\n".join([
+#                   "            .-====-.",
+#                   "           /  _  _  \\",
+#                   "          |  (o)(o)  |",
+#                   "          |    __    |  <- kacamata 😎",
+#                   "       ___|   /__\\   |___",
+#                   "     /    |    /\\    |    \\",
+#                   "    /  🦆 |   /  \\   | 🦏  \\",
+#                   "   |      |  /____\\  |      |",
+#                   "    \\      \\_/ || \\_/      /",
+#                   "     \\_________||_________/",
+#                   "         _/\\_      _/\\_",
+#                   "        /_/\\_\\    /_/\\_\\",
+#                   "          ♫          ♪",
+#               ]),
+#               "\n".join([
+#                   "            .-====-.",
+#                   "           /  _  _  \\",
+#                   "          |  (o)(o)  |",
+#                   "          |    __    |  <- kacamata 😎",
+#                   "       ___|   /__\\   |___",
+#                   "     /    |    /\\    |    \\",
+#                   "    /  🦆 |   /  \\   | 🦏  \\",
+#                   "   |      |  /____\\  |      |",
+#                   "    \\      \\_/ || \\_/      /",
+#                   "     \\_________||_________/",
+#                   "         _/\\_      _/\\_",
+#                   "        /_/\\_\\    /_/\\_\\",
+#                   "        ♪     ♪       ♫",
+#               ]),
+#               "\n".join([
+#                   "            .-====-.",
+#                   "           /  _  _  \\",
+#                   "          |  (o)(o)  |",
+#                   "          |    __    |  <- kacamata 😎",
+#                   "       ___|   /__\\   |___",
+#                   "     /    |    /\\    |    \\",
+#                   "    /  🦆 |   /  \\   | 🦏  \\",
+#                   "   |      |  /____\\  |      |",
+#                   "    \\      \\_/ || \\_/      /",
+#                   "     \\_________||_________/",
+#                   "         _/\\_      _/\\_",
+#                   "        /_/\\_\\    /_/\\_\\",
+#                   "        ♫      ♪      ♫",
+#               ]),
+#           ]
 
-          try:
-              current = int(state_file.read_text(encoding="utf-8").strip())
-          except Exception:
-              current = -1
+#           try:
+#               current = int(state_file.read_text(encoding="utf-8").strip())
+#           except Exception:
+#               current = -1
 
-          next_idx = (current + 1) % len(frames)
-          state_file.write_text(str(next_idx), encoding="utf-8")
+#           next_idx = (current + 1) % len(frames)
+#           state_file.write_text(str(next_idx), encoding="utf-8")
 
-          start = "<!-- DUCK_DANCE_START -->"
-          end = "<!-- DUCK_DANCE_END -->"
+#           start = "<!-- DUCK_DANCE_START -->"
+#           end = "<!-- DUCK_DANCE_END -->"
 
-          text = readme.read_text(encoding="utf-8")
-          block = f"{start}\n```text\n{frames[next_idx]}\n\nmode joget jumbo aktif: {next_idx + 1}/{len(frames)} 😎🦆🦏\n```\n{end}"
+#           text = readme.read_text(encoding="utf-8")
+#           block = f"{start}\n```text\n{frames[next_idx]}\n\nmode joget jumbo aktif: {next_idx + 1}/{len(frames)} 😎🦆🦏\n```\n{end}"
 
-          pattern = re.compile(re.escape(start) + r".*?" + re.escape(end), re.S)
-          updated = pattern.sub(block, text)
+#           pattern = re.compile(re.escape(start) + r".*?" + re.escape(end), re.S)
+#           updated = pattern.sub(block, text)
 
-          if updated != text:
-              readme.write_text(updated, encoding="utf-8")
-          PY
+#           if updated != text:
+#               readme.write_text(updated, encoding="utf-8")
+#           PY
 
-      - name: Commit changes
-        run: |
-          if git diff --quiet README.md .duck-state; then
-            echo "No duck movement this run"
-            exit 0
-          fi
+#       - name: Commit changes
+#         run: |
+#           if git diff --quiet README.md .duck-state; then
+#             echo "No duck movement this run"
+#             exit 0
+#           fi
 
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add README.md .duck-state
-          git commit -m "docs: update duck dance frame"
-          git push
+#           git config user.name "github-actions[bot]"
+#           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+#           git add README.md .duck-state
+#           git commit -m "docs: update duck dance frame"
+#           git push

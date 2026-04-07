@@ -1,7 +1,12 @@
 <?= $this->extend('layouts/main') ?>
 <?= $this->section('content') ?>
-<h2>Data Mahasiswa</h2>
-<p><a href="/mahasiswa/create" class="btn">+ Tambah Mahasiswa</a></p>
+<div class="dash-title-row">
+	<h2>Data Mahasiswa</h2>
+	<div class="dash-breadcrumb">Master / Mahasiswa</div>
+</div>
+
+<div class="card">
+<p><a href="/mahasiswa/create" class="btn"><i class="pi pi-plus"></i> Tambah Mahasiswa</a></p>
 <table>
 <thead><tr><th>No</th><th>NIM</th><th>Nama</th><th>Prodi</th><th>Semester</th><th>IPK</th><th>Penghasilan Ortu</th><th>Jumlah Tanggungan</th><th>Prestasi Non Akademik</th><th>Aksi</th></tr></thead>
 <tbody>
@@ -27,4 +32,5 @@
 <?php endforeach; ?>
 </tbody>
 </table>
+</div>
 <?= $this->endSection() ?>
