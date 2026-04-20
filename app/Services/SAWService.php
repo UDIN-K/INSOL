@@ -27,14 +27,7 @@ class SAWService
         $this->db = db_connect();
     }
 
-    /**
-     * Main process: orchestrate full SAW calculation dengan step-by-step tracking
-     * 
-     * @param int $penilaianKe - Periode/batch penilaian
-     * @param float $threshold - Nilai minimum untuk lolos
-     * @param array $selectedMahasiswa - List mahasiswa ID yang dipilih (optional)
-     * @return array - Complete calculation breakdown
-     */
+
     public function process(int $penilaianKe, float $threshold = null, array $selectedMahasiswa = [])
     {
         try {
@@ -294,9 +287,7 @@ class SAWService
         }
 
         // Normalisasi per mahasiswa & kriteria
-        $normalized['kriteria'] = $kriteria;
-        $normalized['minMax'] = $minMax;
-        $normalized['mahasiswa'] = [];
+        $normalized['kriteria'] = $kriteria; $normalized['minMax'] = $minMax; $normalized['mahasiswa'] = [];
 
         foreach ($mahasiswa as $mId => $mnilai) {
             $normalized['mahasiswa'][$mId] = [];
@@ -315,10 +306,13 @@ class SAWService
                 $max = $minMax[$kId]['max'];
 
                 // Hindari divide by zero
+                // Requirement terbaru:
+                // - benefit menggunakan basis min
+                // - cost menggunakan basis max
                 if ($atribut === 'benefit') {
-                    $rij = ($max > 0) ? $nilai / $max : 0;
-                } else {
                     $rij = ($nilai > 0) ? $min / $nilai : 0;
+                } else {
+                    $rij = ($max > 0) ? $nilai / $max : 0;
                 }
 
                 $normalized['mahasiswa'][$mId][$kId] = round($rij, 6);
@@ -350,8 +344,7 @@ class SAWService
                 $kontribusi = $bobot * $rij;
                 $skor += $kontribusi;
 
-                $details[$kId] = [
-                    'kriteria' => $k['kriteria'],
+                $details[$kId] = [ 'kriteria' => $k['kriteria'],
                     'kode' => $k['kode'],
                     'bobot' => $bobot,
                     'nilai_normalisasi' => $rij,

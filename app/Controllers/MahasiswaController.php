@@ -50,7 +50,7 @@ class MahasiswaController extends BaseController
 
         return null;
     }
-
+//model db
     private function mahasiswaPayload(): array
     {
         return [

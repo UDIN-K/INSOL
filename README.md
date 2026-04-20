@@ -46,25 +46,7 @@ Project ini dipakai untuk kelola data Mahasiswa, Kriteria, Penilaian, dan Hasil 
 
 Section ini diupdate otomatis oleh workflow GitHub Actions di .github/workflows/duck-dance.yml.
 
-<!-- DUCK_DANCE_START -->
-```text
-            .-====-.
-           /  _  _  \
-          |  (o)(o)  |
-          |    __    |  <- kacamata 😎
-       ___|   /__\   |___
-     /    |    /\    |    \
-    /  🦆 |   /  \   | 🦏  \
-   |      |  /____\  |      |
-    \      \_/ || \_/      /
-     \_________||_________/
-         _/\_      _/\_
-        /_/\_\    /_/\_\
-        ♪     ♪       ♫
 
-mode joget jumbo aktif: 3/4 😎🦆🦏
-```
-<!-- DUCK_DANCE_END -->
 
 ## Catatan
 

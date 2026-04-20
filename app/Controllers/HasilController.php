@@ -257,8 +257,8 @@ class HasilController extends BaseController
                 $v = (float) ($nilai[$mid][$kid] ?? 0);
                 $w = ((float) $k['bobot']) / $bobotTotal;
                 $n = (($k['atribut'] ?? 'benefit') === 'cost')
-                    ? ($v > 0 ? $min[$kid] / $v : 0)
-                    : ($max[$kid] > 0 ? $v / $max[$kid] : 0);
+                    ? ($max[$kid] > 0 ? $v / $max[$kid] : 0)
+                    : ($v > 0 ? $min[$kid] / $v : 0);
 
                 $normalisasi[$mid][$kid] = $n;
                 $nilaiTerbobot = $n * $w;
